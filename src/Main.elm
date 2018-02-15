@@ -56,14 +56,49 @@ update msg game =
     game
 
 
-view : Game -> Html Msg
-view game =
+viewMapAndEntities : Game -> Html a
+viewMapAndEntities game =
     [ Map.render Map.level1
     , Entity.renderList <| List.map Pirate.toEntity game.pirates
     , Entity.render game.playerShip
     ]
         |> Element.layers
         |> Element.toHtml
+
+
+showXYEntity : Map -> String -> { a | x : Int, y : Int } -> Html b
+showXYEntity map name { x, y } =
+    Html.div []
+        [ Html.h4 [] [ text name ]
+        , Html.ul []
+            [ Html.li [] [ text <| "X: " ++ toString x ]
+            , Html.li [] [ text <| "Y: " ++ toString y ]
+            , Html.li [] [ text <| "Tile number: " ++ (toString <| Map.tileNumberFromCoords x y map) ]
+            ]
+        ]
+
+
+debugInfo : Game -> Html Msg
+debugInfo game =
+    let
+        player =
+            showXYEntity game.map "Player Ship" game.playerShip
+
+        pirates =
+            List.map (showXYEntity game.map "Pirate") game.pirates
+
+        header =
+            Html.h2 [] [ text "Debug Entities" ]
+    in
+        Html.section [] (header :: player :: pirates)
+
+
+view : Game -> Html Msg
+view game =
+    Html.div []
+        [ viewMapAndEntities game
+        , debugInfo game
+        ]
 
 
 main : Program Never Game Msg

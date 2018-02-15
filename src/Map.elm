@@ -1,4 +1,4 @@
-module Map exposing (Map, render, level1)
+module Map exposing (Map, render, level1, tileNumberFromCoords)
 
 import Element exposing (Element)
 import Tile exposing (Tile(..))
@@ -281,3 +281,15 @@ landTiles =
     , TileId 53
     , TileId 40
     ]
+
+
+tileNumberFromCoords : Int -> Int -> Map -> Int
+tileNumberFromCoords x y { width, sheet } =
+    let
+        tilesFromRight =
+            x // sheet.tileSide
+
+        tilesFromTop =
+            y // sheet.tileSide
+    in
+        (tilesFromTop * width) + tilesFromRight
