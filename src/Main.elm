@@ -3,18 +3,18 @@ module Main exposing (main)
 import Html exposing (Html, text)
 import Map exposing (Map)
 import Element exposing (Element)
-import Pirate
+import Pirate exposing (Pirate)
 import Entity exposing (Entity)
 
 
 type alias Game =
     { map : Map
-    , pirates : List (Entity {})
-    , playerShip : Entity {}
+    , pirates : List Pirate
+    , playerShip : Entity
     }
 
 
-player : Entity {}
+player : Entity
 player =
     { x = 416
     , y = 576
@@ -24,23 +24,17 @@ player =
     }
 
 
-pirate1 : Entity {}
+pirate1 : Pirate
 pirate1 =
     { x = 896
     , y = 544
-    , width = Pirate.width
-    , height = Pirate.height
-    , imagePath = Pirate.imagePath
     }
 
 
-pirate2 : Entity {}
+pirate2 : Pirate
 pirate2 =
     { x = 640
     , y = 896
-    , width = Pirate.width
-    , height = Pirate.height
-    , imagePath = Pirate.imagePath
     }
 
 
@@ -65,7 +59,7 @@ update msg game =
 view : Game -> Html Msg
 view game =
     [ Map.render Map.level1
-    , Entity.renderList game.pirates
+    , Entity.renderList <| List.map Pirate.toEntity game.pirates
     , Entity.render game.playerShip
     ]
         |> Element.layers

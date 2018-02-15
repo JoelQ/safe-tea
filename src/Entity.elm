@@ -3,17 +3,16 @@ module Entity exposing (Entity, render, renderList)
 import Element exposing (Element)
 
 
-type alias Entity a =
-    { a
-        | x : Int
-        , y : Int
-        , width : Int
-        , height : Int
-        , imagePath : String
+type alias Entity =
+    { x : Int
+    , y : Int
+    , width : Int
+    , height : Int
+    , imagePath : String
     }
 
 
-render : Entity a -> Element
+render : Entity -> Element
 render { x, y, imagePath, width, height } =
     let
         sprite =
@@ -26,7 +25,7 @@ render { x, y, imagePath, width, height } =
         Element.container 960 960 position sprite
 
 
-renderList : List (Entity a) -> Element
+renderList : List Entity -> Element
 renderList entities =
     entities
         |> List.map render
