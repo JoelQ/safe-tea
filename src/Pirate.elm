@@ -1,13 +1,21 @@
-module Pirate exposing (Pirate, toEntity)
+module Pirate exposing (Pirate, toEntity, position)
 
 import Element exposing (Element)
 import Entity exposing (Entity)
+import Map exposing (Map)
+import AStar
 
 
 type alias Pirate =
     { x : Int
     , y : Int
+    , path : Maybe AStar.Path
     }
+
+
+position : Pirate -> ( Int, Int )
+position { x, y } =
+    ( x, y )
 
 
 toEntity : Pirate -> Entity

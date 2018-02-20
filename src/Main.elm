@@ -5,6 +5,7 @@ import Map exposing (Map)
 import Element exposing (Element)
 import Pirate exposing (Pirate)
 import Entity exposing (Entity)
+import Path
 
 
 type alias Game =
@@ -17,7 +18,7 @@ type alias Game =
 player : Entity
 player =
     { x = 416
-    , y = 576
+    , y = 608
     , width = 33
     , height = 56
     , imagePath = "../images/player-ship.png"
@@ -26,15 +27,17 @@ player =
 
 pirate1 : Pirate
 pirate1 =
-    { x = 896
+    { x = 928
     , y = 544
+    , path = Nothing
     }
 
 
 pirate2 : Pirate
 pirate2 =
-    { x = 640
-    , y = 896
+    { x = 672
+    , y = 928
+    , path = Nothing
     }
 
 
@@ -43,6 +46,23 @@ initialGame =
     { map = Map.level1
     , pirates = [ pirate1, pirate2 ]
     , playerShip = player
+    }
+
+
+calculatesPaths : Game -> Game
+calculatesPaths game =
+    { game | pirates = List.map (calculatePiratePath game) game.pirates }
+
+
+calculatePiratePath : Game -> Pirate -> Pirate
+calculatePiratePath game pirate =
+    { pirate
+        | path =
+            Path.fromTo game.map
+                (Pirate.position pirate)
+                ( game.playerShip.x
+                , game.playerShip.y
+                )
     }
 
 
@@ -61,6 +81,7 @@ viewMapAndEntities game =
     [ Map.render Map.level1
     , Entity.renderList <| List.map Pirate.toEntity game.pirates
     , Entity.render game.playerShip
+    , Path.renderList <| List.map .path game.pirates
     ]
         |> Element.layers
         |> Element.toHtml
@@ -104,7 +125,7 @@ view game =
 main : Program Never Game Msg
 main =
     Html.beginnerProgram
-        { model = initialGame
+        { model = calculatesPaths initialGame
         , update = update
         , view = view
         }

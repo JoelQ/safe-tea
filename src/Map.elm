@@ -1,9 +1,18 @@
-module Map exposing (Map, render, level1, tileNumberFromCoords)
+module Map
+    exposing
+        ( Map
+        , render
+        , level1
+        , tileNumberFromCoords
+        , centerOfTile
+        , validMovesFrom
+        )
 
 import Element exposing (Element)
 import Tile exposing (Tile(..))
 import TileSheet exposing (TileSheet)
 import List.Extra
+import Set exposing (Set)
 
 
 type alias Map =
@@ -287,9 +296,93 @@ tileNumberFromCoords : Int -> Int -> Map -> Int
 tileNumberFromCoords x y { width, sheet } =
     let
         tilesFromRight =
-            x // sheet.tileSide
+            (x // sheet.tileSide) + 1
 
         tilesFromTop =
             y // sheet.tileSide
     in
         (tilesFromTop * width) + tilesFromRight
+
+
+passableNeighboringTiles : Map -> ( Int, Int ) -> List Int
+passableNeighboringTiles ({ width, sheet } as map) ( x, y ) =
+    let
+        tileNumber =
+            tileNumberFromCoords x y map
+
+        north =
+            tileNumber - width
+
+        south =
+            tileNumber + width
+
+        east =
+            tileNumber + 1
+
+        west =
+            tileNumber - 1
+
+        northEast =
+            north + 1
+
+        northWest =
+            north - 1
+
+        southEast =
+            south + 1
+
+        southWest =
+            south - 1
+    in
+        case tileNumber % width of
+            0 ->
+                [ north
+                , south
+                , west
+                , northWest
+                , southWest
+                ]
+
+            1 ->
+                [ north
+                , south
+                , east
+                , northEast
+                , southEast
+                ]
+
+            _ ->
+                [ north
+                , south
+                , east
+                , west
+                , northEast
+                , northWest
+                , southEast
+                , southWest
+                ]
+
+
+validMovesFrom : Map -> ( Int, Int ) -> Set ( Int, Int )
+validMovesFrom map position =
+    passableNeighboringTiles map position
+        |> List.map (centerOfTile map)
+        |> Set.fromList
+
+
+centerOfTile : Map -> Int -> ( Int, Int )
+centerOfTile { sheet, width } tileNumber =
+    let
+        xEdge =
+            sheet.tileSide * ((tileNumber - 1) % width)
+
+        yEdge =
+            sheet.tileSide * ((tileNumber - 1) // width)
+
+        xCenter =
+            xEdge + (sheet.tileSide // 2)
+
+        yCenter =
+            yEdge + (sheet.tileSide // 2)
+    in
+        ( xCenter, yCenter )
