@@ -1,4 +1,4 @@
-module Pirate exposing (Pirate, toEntity, position)
+module Pirate exposing (Pirate, toEntity, position, move)
 
 import Element exposing (Element)
 import Entity exposing (Entity)
@@ -26,6 +26,16 @@ toEntity { x, y } =
     , height = height
     , imagePath = imagePath
     }
+
+
+move : Pirate -> Pirate
+move pirate =
+    case pirate.path of
+        Just (( newX, newY ) :: rest) ->
+            { pirate | x = newX, y = newY, path = Just rest }
+
+        _ ->
+            pirate
 
 
 imagePath : String

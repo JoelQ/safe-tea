@@ -6,6 +6,7 @@ import Element exposing (Element)
 import Pirate exposing (Pirate)
 import Entity exposing (Entity)
 import Path
+import Time
 
 
 type alias Game =
@@ -67,13 +68,14 @@ calculatePiratePath game pirate =
 
 
 type Msg
-    = Start
-    | End
+    = Tick
 
 
-update : Msg -> Game -> Game
+update : Msg -> Game -> ( Game, Cmd Msg )
 update msg game =
-    game
+    case msg of
+        Tick ->
+            ( { game | pirates = List.map Pirate.move game.pirates }, Cmd.none )
 
 
 viewMapAndEntities : Game -> Html a
@@ -122,10 +124,16 @@ view game =
         ]
 
 
+subscriptions : Game -> Sub Msg
+subscriptions model =
+    Time.every Time.second (always Tick)
+
+
 main : Program Never Game Msg
 main =
-    Html.beginnerProgram
-        { model = calculatesPaths initialGame
+    Html.program
+        { init = ( calculatesPaths initialGame, Cmd.none )
         , update = update
         , view = view
+        , subscriptions = subscriptions
         }
