@@ -126,7 +126,7 @@ view game =
 
 subscriptions : Game -> Sub Msg
 subscriptions model =
-    Time.every Time.second (always Tick)
+    Time.every (33 * Time.millisecond) (always Tick)
 
 
 main : Program Never Game Msg

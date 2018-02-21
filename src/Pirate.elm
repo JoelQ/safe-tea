@@ -4,6 +4,7 @@ import Element exposing (Element)
 import Entity exposing (Entity)
 import Map exposing (Map)
 import AStar
+import Euclid.Vector as Vector
 
 
 type alias Pirate =
@@ -31,8 +32,38 @@ toEntity { x, y } =
 move : Pirate -> Pirate
 move pirate =
     case pirate.path of
-        Just (( newX, newY ) :: rest) ->
-            { pirate | x = newX, y = newY, path = Just rest }
+        Just (nextPoint :: rest) ->
+            let
+                distanceToNextPoint =
+                    AStar.pythagoreanCost (position pirate) nextPoint
+            in
+                if (round distanceToNextPoint) > speed then
+                    let
+                        ( nextX, nextY ) =
+                            nextPoint
+
+                        here =
+                            Vector.vec (toFloat pirate.x) (toFloat pirate.y)
+
+                        finalDestination =
+                            Vector.vec (toFloat nextX) (toFloat nextY)
+
+                        totalMove =
+                            Vector.subtract finalDestination here
+
+                        thisMove =
+                            Vector.fromPolar (Vector.arg totalMove) (toFloat speed)
+
+                        finalMoveVector =
+                            Vector.add here thisMove
+                    in
+                        { pirate | x = round finalMoveVector.x, y = round finalMoveVector.y }
+                else
+                    let
+                        ( newX, newY ) =
+                            nextPoint
+                    in
+                        { pirate | x = newX, y = newY, path = Just rest }
 
         _ ->
             pirate
@@ -51,3 +82,8 @@ width =
 height : Int
 height =
     56
+
+
+speed : Int
+speed =
+    2
