@@ -7,6 +7,7 @@ import Pirate exposing (Pirate)
 import Entity exposing (Entity)
 import Path
 import Time
+import Coordinate
 
 
 type alias Game =
@@ -18,8 +19,7 @@ type alias Game =
 
 player : Entity
 player =
-    { x = 416
-    , y = 608
+    { position = Coordinate.fromGlobalXY 416 608
     , width = 33
     , height = 56
     , imagePath = "../images/player-ship.png"
@@ -28,16 +28,14 @@ player =
 
 pirate1 : Pirate
 pirate1 =
-    { x = 928
-    , y = 544
+    { position = Coordinate.fromGlobalXY 928 544
     , path = Nothing
     }
 
 
 pirate2 : Pirate
 pirate2 =
-    { x = 672
-    , y = 928
+    { position = Coordinate.fromGlobalXY 672 928
     , path = Nothing
     }
 
@@ -61,9 +59,7 @@ calculatePiratePath game pirate =
         | path =
             Path.fromTo game.map
                 (Pirate.position pirate)
-                ( game.playerShip.x
-                , game.playerShip.y
-                )
+                (Coordinate.toTuple game.playerShip.position)
     }
 
 
@@ -89,16 +85,20 @@ viewMapAndEntities game =
         |> Element.toHtml
 
 
-showXYEntity : Map -> String -> { a | x : Int, y : Int } -> Html b
-showXYEntity map name { x, y } =
-    Html.div []
-        [ Html.h4 [] [ text name ]
-        , Html.ul []
-            [ Html.li [] [ text <| "X: " ++ toString x ]
-            , Html.li [] [ text <| "Y: " ++ toString y ]
-            , Html.li [] [ text <| "Tile number: " ++ (toString <| Map.tileNumberFromCoords x y map) ]
+showXYEntity : Map -> String -> { a | position : Coordinate.Global } -> Html b
+showXYEntity map name { position } =
+    let
+        ( x, y ) =
+            Coordinate.toTuple position
+    in
+        Html.div []
+            [ Html.h4 [] [ text name ]
+            , Html.ul []
+                [ Html.li [] [ text <| "X: " ++ toString x ]
+                , Html.li [] [ text <| "Y: " ++ toString y ]
+                , Html.li [] [ text <| "Tile number: " ++ (toString <| Map.tileNumberFromCoords x y map) ]
+                ]
             ]
-        ]
 
 
 debugInfo : Game -> Html Msg

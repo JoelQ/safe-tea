@@ -5,24 +5,23 @@ import Entity exposing (Entity)
 import Map exposing (Map)
 import AStar
 import Euclid.Vector as Vector
+import Coordinate
 
 
 type alias Pirate =
-    { x : Int
-    , y : Int
+    { position : Coordinate.Global
     , path : Maybe AStar.Path
     }
 
 
 position : Pirate -> ( Int, Int )
-position { x, y } =
-    ( x, y )
+position pirate =
+    Coordinate.toTuple pirate.position
 
 
 toEntity : Pirate -> Entity
-toEntity { x, y } =
-    { x = x
-    , y = y
+toEntity { position } =
+    { position = position
     , width = width
     , height = height
     , imagePath = imagePath
@@ -42,28 +41,22 @@ move pirate =
                         ( nextX, nextY ) =
                             nextPoint
 
-                        here =
-                            Vector.vec (toFloat pirate.x) (toFloat pirate.y)
-
-                        finalDestination =
-                            Vector.vec (toFloat nextX) (toFloat nextY)
-
-                        totalMove =
-                            Vector.subtract finalDestination here
-
-                        thisMove =
-                            Vector.fromPolar (Vector.arg totalMove) (toFloat speed)
-
-                        finalMoveVector =
-                            Vector.add here thisMove
+                        thisTickG =
+                            Coordinate.fromGlobalXY nextX nextY
+                                |> Coordinate.toLocal pirate.position
+                                |> Coordinate.setMagnitude speed
+                                |> Coordinate.toGlobal pirate.position
                     in
-                        { pirate | x = round finalMoveVector.x, y = round finalMoveVector.y }
+                        { pirate | position = thisTickG }
                 else
                     let
                         ( newX, newY ) =
                             nextPoint
+
+                        newPosition =
+                            Coordinate.fromGlobalXY newX newY
                     in
-                        { pirate | x = newX, y = newY, path = Just rest }
+                        { pirate | position = newPosition, path = Just rest }
 
         _ ->
             pirate
