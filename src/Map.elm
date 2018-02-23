@@ -15,6 +15,10 @@ import List.Extra
 import Set exposing (Set)
 
 
+type TileNumber
+    = TileNumber Int
+
+
 type Region
     = NorthWestCorner
     | NorthEdge
@@ -27,17 +31,17 @@ type Region
     | SouthEastCorner
 
 
-region : Map -> Int -> Region
-region { land, width } tileNumber =
+region : Map -> TileNumber -> Region
+region { land, width } (TileNumber tileNumber) =
     let
         height =
             (List.length land) // width
 
         x =
-            (tileNumber - 1) % width
+            tileNumber % width
 
         y =
-            (tileNumber - 1) // height
+            tileNumber // height
     in
         if ( x, y ) == ( 0, 0 ) then
             NorthWestCorner
@@ -336,22 +340,22 @@ landTiles =
     ]
 
 
-tileNumberFromCoords : Int -> Int -> Map -> Int
+tileNumberFromCoords : Int -> Int -> Map -> TileNumber
 tileNumberFromCoords x y { width, sheet } =
     let
         tilesFromRight =
-            (x // sheet.tileSide) + 1
+            (x // sheet.tileSide)
 
         tilesFromTop =
             y // sheet.tileSide
     in
-        (tilesFromTop * width) + tilesFromRight
+        TileNumber ((tilesFromTop * width) + tilesFromRight)
 
 
-passableNeighboringTiles : Map -> ( Int, Int ) -> List Int
+passableNeighboringTiles : Map -> ( Int, Int ) -> List TileNumber
 passableNeighboringTiles ({ width, sheet } as map) ( x, y ) =
     let
-        tileNumber =
+        (TileNumber tileNumber) =
             tileNumberFromCoords x y map
 
         north =
@@ -378,72 +382,72 @@ passableNeighboringTiles ({ width, sheet } as map) ( x, y ) =
         southWest =
             south - 1
     in
-        case region map tileNumber of
+        case region map (TileNumber tileNumber) of
             NorthWestCorner ->
-                [ south
-                , east
-                , southEast
+                [ TileNumber south
+                , TileNumber east
+                , TileNumber southEast
                 ]
 
             NorthEastCorner ->
-                [ south
-                , west
-                , southWest
+                [ TileNumber south
+                , TileNumber west
+                , TileNumber southWest
                 ]
 
             SouthWestCorner ->
-                [ north
-                , east
-                , northEast
+                [ TileNumber north
+                , TileNumber east
+                , TileNumber northEast
                 ]
 
             SouthEastCorner ->
-                [ north
-                , west
-                , northWest
+                [ TileNumber north
+                , TileNumber west
+                , TileNumber northWest
                 ]
 
             NorthEdge ->
-                [ south
-                , east
-                , west
-                , southEast
-                , southWest
+                [ TileNumber south
+                , TileNumber east
+                , TileNumber west
+                , TileNumber southEast
+                , TileNumber southWest
                 ]
 
             WestEdge ->
-                [ north
-                , south
-                , east
-                , northEast
-                , southEast
+                [ TileNumber north
+                , TileNumber south
+                , TileNumber east
+                , TileNumber northEast
+                , TileNumber southEast
                 ]
 
             EastEdge ->
-                [ north
-                , south
-                , west
-                , northWest
-                , southWest
+                [ TileNumber north
+                , TileNumber south
+                , TileNumber west
+                , TileNumber northWest
+                , TileNumber southWest
                 ]
 
             SouthEdge ->
-                [ north
-                , east
-                , west
-                , northEast
-                , northWest
+                [ TileNumber north
+                , TileNumber east
+                , TileNumber west
+                , TileNumber northEast
+                , TileNumber northWest
                 ]
 
             Middle ->
-                [ north
-                , south
-                , east
-                , west
-                , northEast
-                , northWest
-                , southEast
-                , southWest
+                [ TileNumber north
+                , TileNumber south
+                , TileNumber east
+                , TileNumber west
+                , TileNumber northEast
+                , TileNumber northWest
+                , TileNumber southEast
+                , TileNumber southWest
                 ]
 
 
@@ -454,14 +458,14 @@ validMovesFrom map position =
         |> Set.fromList
 
 
-centerOfTile : Map -> Int -> ( Int, Int )
-centerOfTile { sheet, width } tileNumber =
+centerOfTile : Map -> TileNumber -> ( Int, Int )
+centerOfTile { sheet, width } (TileNumber tileNumber) =
     let
         xEdge =
-            sheet.tileSide * ((tileNumber - 1) % width)
+            sheet.tileSide * (tileNumber % width)
 
         yEdge =
-            sheet.tileSide * ((tileNumber - 1) // width)
+            sheet.tileSide * (tileNumber // width)
 
         xCenter =
             xEdge + (sheet.tileSide // 2)
