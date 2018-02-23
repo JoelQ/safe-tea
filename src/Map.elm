@@ -15,6 +15,50 @@ import List.Extra
 import Set exposing (Set)
 
 
+type Region
+    = NorthWestCorner
+    | NorthEdge
+    | NorthEastCorner
+    | WestEdge
+    | Middle
+    | EastEdge
+    | SouthWestCorner
+    | SouthEdge
+    | SouthEastCorner
+
+
+region : Map -> Int -> Region
+region { land, width } tileNumber =
+    let
+        height =
+            (List.length land) // width
+
+        x =
+            (tileNumber - 1) % width
+
+        y =
+            (tileNumber - 1) // height
+    in
+        if ( x, y ) == ( 0, 0 ) then
+            NorthWestCorner
+        else if ( x, y ) == ( width - 1, 0 ) then
+            NorthEastCorner
+        else if ( x, y ) == ( 0, height - 1 ) then
+            SouthWestCorner
+        else if ( x, y ) == ( width - 1, height - 1 ) then
+            SouthEastCorner
+        else if y == 0 then
+            NorthEdge
+        else if x == 0 then
+            WestEdge
+        else if x == (width - 1) then
+            EastEdge
+        else if y == (height - 1) then
+            SouthEdge
+        else
+            Middle
+
+
 type alias Map =
     { land : List Tile
     , sea : List Tile
@@ -334,16 +378,40 @@ passableNeighboringTiles ({ width, sheet } as map) ( x, y ) =
         southWest =
             south - 1
     in
-        case tileNumber % width of
-            0 ->
-                [ north
-                , south
+        case region map tileNumber of
+            NorthWestCorner ->
+                [ south
+                , east
+                , southEast
+                ]
+
+            NorthEastCorner ->
+                [ south
                 , west
-                , northWest
                 , southWest
                 ]
 
-            1 ->
+            SouthWestCorner ->
+                [ north
+                , east
+                , northEast
+                ]
+
+            SouthEastCorner ->
+                [ north
+                , west
+                , northWest
+                ]
+
+            NorthEdge ->
+                [ south
+                , east
+                , west
+                , southEast
+                , southWest
+                ]
+
+            WestEdge ->
                 [ north
                 , south
                 , east
@@ -351,7 +419,23 @@ passableNeighboringTiles ({ width, sheet } as map) ( x, y ) =
                 , southEast
                 ]
 
-            _ ->
+            EastEdge ->
+                [ north
+                , south
+                , west
+                , northWest
+                , southWest
+                ]
+
+            SouthEdge ->
+                [ north
+                , east
+                , west
+                , northEast
+                , northWest
+                ]
+
+            Middle ->
                 [ north
                 , south
                 , east
