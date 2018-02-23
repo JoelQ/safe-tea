@@ -1,4 +1,4 @@
-module Pirate exposing (Pirate, toEntity, position, move)
+module Pirate exposing (Pirate, toEntity, move)
 
 import Element exposing (Element)
 import Entity exposing (Entity)
@@ -12,11 +12,6 @@ type alias Pirate =
     { position : Coordinate.Global
     , path : Maybe AStar.Path
     }
-
-
-position : Pirate -> ( Int, Int )
-position pirate =
-    Coordinate.toTuple pirate.position
 
 
 toEntity : Pirate -> Entity
@@ -34,7 +29,8 @@ move pirate =
         Just (nextPoint :: rest) ->
             let
                 distanceToNextPoint =
-                    AStar.pythagoreanCost (position pirate) nextPoint
+                    AStar.pythagoreanCost (Coordinate.toTuple pirate.position)
+                        nextPoint
             in
                 if (round distanceToNextPoint) > speed then
                     let

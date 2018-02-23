@@ -58,7 +58,7 @@ calculatePiratePath game pirate =
     { pirate
         | path =
             Path.fromTo game.map
-                (Pirate.position pirate)
+                (Coordinate.toTuple pirate.position)
                 (Coordinate.toTuple game.playerShip.position)
     }
 
