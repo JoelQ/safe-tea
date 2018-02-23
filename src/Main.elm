@@ -40,10 +40,17 @@ pirate2 =
     }
 
 
+pirate3 : Pirate
+pirate3 =
+    { position = Coordinate.fromGlobalXY 325 32
+    , path = Nothing
+    }
+
+
 initialGame : Game
 initialGame =
     { map = Map.level1
-    , pirates = [ pirate1, pirate2 ]
+    , pirates = [ pirate1, pirate2, pirate3 ]
     , playerShip = player
     }
 

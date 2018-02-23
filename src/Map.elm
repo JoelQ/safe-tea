@@ -9,10 +9,10 @@ module Map
         )
 
 import Element exposing (Element)
-import Tile exposing (Tile(..))
-import TileSheet exposing (TileSheet)
 import List.Extra
 import Set exposing (Set)
+import Tile exposing (Tile(..))
+import TileSheet exposing (TileSheet)
 
 
 type TileNumber
@@ -353,7 +353,25 @@ tileNumberFromCoords x y { width, sheet } =
 
 
 passableNeighboringTiles : Map -> ( Int, Int ) -> List TileNumber
-passableNeighboringTiles ({ width, sheet } as map) ( x, y ) =
+passableNeighboringTiles map coords =
+    let
+        neighbors =
+            neighboringTiles map coords
+                |> List.map (\(TileNumber tn) -> tn)
+                |> Set.fromList
+
+        passable =
+            passableTiles map
+                |> List.map (\(TileNumber tn) -> tn)
+                |> Set.fromList
+    in
+        Set.intersect neighbors passable
+            |> Set.toList
+            |> List.map TileNumber
+
+
+neighboringTiles : Map -> ( Int, Int ) -> List TileNumber
+neighboringTiles ({ width, sheet } as map) ( x, y ) =
     let
         (TileNumber tileNumber) =
             tileNumberFromCoords x y map
@@ -474,3 +492,20 @@ centerOfTile { sheet, width } (TileNumber tileNumber) =
             yEdge + (sheet.tileSide // 2)
     in
         ( xCenter, yCenter )
+
+
+passableTile : Int -> Tile -> Maybe TileNumber
+passableTile rawTileNumber tile =
+    case tile of
+        NoTile ->
+            Just <| TileNumber <| rawTileNumber
+
+        _ ->
+            Nothing
+
+
+passableTiles : Map -> List TileNumber
+passableTiles { land } =
+    land
+        |> List.indexedMap passableTile
+        |> List.filterMap identity
