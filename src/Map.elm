@@ -2,17 +2,28 @@ module Map
     exposing
         ( Map
         , render
+        , renderInvalidOverlayAt
         , level1
         , tileNumberFromCoords
+        , topLeftCornerOfTile
         , centerOfTile
         , validMovesFrom
+        , pixelWidth
+        , pixelHeight
+        , TileNumber(..)
+        , Pixels(..)
         )
 
+import Color
 import Element exposing (Element)
 import List.Extra
 import Set exposing (Set)
 import Tile exposing (Tile(..))
 import TileSheet exposing (TileSheet)
+
+
+type Pixels
+    = Pixels Int
 
 
 type TileNumber
@@ -78,6 +89,16 @@ level1 =
     , sheet = TileSheet.kennyPirates
     , width = 15
     }
+
+
+pixelWidth : Map -> Pixels
+pixelWidth { width, sheet } =
+    Pixels <| width * sheet.tileSide
+
+
+pixelHeight : Map -> Pixels
+pixelHeight { width, land, sheet } =
+    Pixels <| (List.length land // width) * sheet.tileSide
 
 
 render : Map -> Element
@@ -340,6 +361,25 @@ landTiles =
     ]
 
 
+invalidMoveOverlay : TileSheet -> Element
+invalidMoveOverlay { tileSide } =
+    Element.spacer tileSide tileSide
+        |> Element.color Color.red
+        |> Element.opacity 0.3
+
+
+renderInvalidOverlayAt : Map -> TileNumber -> Element
+renderInvalidOverlayAt ({ sheet } as map) tileNumber =
+    let
+        ( x, y ) =
+            topLeftCornerOfTile map tileNumber
+
+        screenPosition =
+            Element.topLeftAt (Element.absolute x) (Element.absolute y)
+    in
+        Element.container 960 960 screenPosition (invalidMoveOverlay sheet)
+
+
 tileNumberFromCoords : Int -> Int -> Map -> TileNumber
 tileNumberFromCoords x y { width, sheet } =
     let
@@ -476,22 +516,23 @@ validMovesFrom map position =
         |> Set.fromList
 
 
-centerOfTile : Map -> TileNumber -> ( Int, Int )
-centerOfTile { sheet, width } (TileNumber tileNumber) =
+topLeftCornerOfTile : Map -> TileNumber -> ( Int, Int )
+topLeftCornerOfTile { sheet, width } (TileNumber tileNumber) =
     let
         xEdge =
             sheet.tileSide * (tileNumber % width)
 
         yEdge =
             sheet.tileSide * (tileNumber // width)
-
-        xCenter =
-            xEdge + (sheet.tileSide // 2)
-
-        yCenter =
-            yEdge + (sheet.tileSide // 2)
     in
-        ( xCenter, yCenter )
+        ( xEdge, yEdge )
+
+
+centerOfTile : Map -> TileNumber -> ( Int, Int )
+centerOfTile map tileNumber =
+    topLeftCornerOfTile map tileNumber
+        |> Tuple.mapFirst (\x -> x + (map.sheet.tileSide // 2))
+        |> Tuple.mapSecond (\y -> y + (map.sheet.tileSide // 2))
 
 
 passableTile : Int -> Tile -> Maybe TileNumber
