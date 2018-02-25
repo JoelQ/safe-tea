@@ -1,4 +1,4 @@
-module Tile exposing (Tile(..), render)
+module Tile exposing (Tile(..), render, kennyPirateTower)
 
 import TileSheet exposing (TileSheet)
 import Element exposing (Element)
@@ -7,6 +7,11 @@ import Element exposing (Element)
 type Tile
     = NoTile
     | TileId Int
+
+
+kennyPirateTower : Tile
+kennyPirateTower =
+    TileId 13
 
 
 render : TileSheet -> Tile -> Element

@@ -2,7 +2,7 @@ module Map
     exposing
         ( Map
         , render
-        , renderInvalidOverlayAt
+        , renderAtTile
         , level1
         , tileNumberFromCoords
         , topLeftCornerOfTile
@@ -10,11 +10,11 @@ module Map
         , validMovesFrom
         , pixelWidth
         , pixelHeight
+        , isBuildableTile
         , TileNumber(..)
         , Pixels(..)
         )
 
-import Color
 import Element exposing (Element)
 import List.Extra
 import Set exposing (Set)
@@ -361,15 +361,8 @@ landTiles =
     ]
 
 
-invalidMoveOverlay : TileSheet -> Element
-invalidMoveOverlay { tileSide } =
-    Element.spacer tileSide tileSide
-        |> Element.color Color.red
-        |> Element.opacity 0.3
-
-
-renderInvalidOverlayAt : Map -> TileNumber -> Element
-renderInvalidOverlayAt ({ sheet } as map) tileNumber =
+renderAtTile : Map -> TileNumber -> Element -> Element
+renderAtTile ({ sheet } as map) tileNumber element =
     let
         ( x, y ) =
             topLeftCornerOfTile map tileNumber
@@ -377,7 +370,7 @@ renderInvalidOverlayAt ({ sheet } as map) tileNumber =
         screenPosition =
             Element.topLeftAt (Element.absolute x) (Element.absolute y)
     in
-        Element.container 960 960 screenPosition (invalidMoveOverlay sheet)
+        Element.container 960 960 screenPosition element
 
 
 tileNumberFromCoords : Int -> Int -> Map -> TileNumber
@@ -550,3 +543,25 @@ passableTiles { land } =
     land
         |> List.indexedMap passableTile
         |> List.filterMap identity
+
+
+buildableTile : Int -> Tile -> Maybe TileNumber
+buildableTile rawTileNumber tile =
+    case tile of
+        NoTile ->
+            Nothing
+
+        TileId _ ->
+            Just <| TileNumber rawTileNumber
+
+
+buildableTiles : Map -> List TileNumber
+buildableTiles { land } =
+    land
+        |> List.indexedMap buildableTile
+        |> List.filterMap identity
+
+
+isBuildableTile : Map -> TileNumber -> Bool
+isBuildableTile map tileNumber =
+    List.member tileNumber (buildableTiles map)

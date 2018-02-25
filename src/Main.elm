@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (Html, text)
-import Map exposing (Map, TileNumber(..), Pixels(..))
+import Map exposing (Map)
 import Mouse
 import Element exposing (Element)
 import Pirate exposing (Pirate)
@@ -9,13 +9,14 @@ import Entity exposing (Entity)
 import Path
 import Time
 import Coordinate
+import Tower
 
 
 type alias Game =
     { map : Map
     , pirates : List Pirate
     , playerShip : Entity
-    , towerPlacement : Maybe TileNumber
+    , towerPlacement : Tower.Placement
     }
 
 
@@ -54,7 +55,7 @@ initialGame =
     { map = Map.level1
     , pirates = [ pirate1, pirate2, pirate3 ]
     , playerShip = player
-    , towerPlacement = Just (TileNumber 55)
+    , towerPlacement = Tower.noPlacement
     }
 
 
@@ -78,21 +79,6 @@ type Msg
     | MouseMove Mouse.Position
 
 
-towerPlacement : Mouse.Position -> Map -> Maybe TileNumber
-towerPlacement { x, y } map =
-    let
-        (Pixels mapWidth) =
-            Map.pixelWidth map
-
-        (Pixels mapHeight) =
-            Map.pixelHeight map
-    in
-        if x < mapWidth && y < mapHeight then
-            Just (Map.tileNumberFromCoords x y map)
-        else
-            Nothing
-
-
 update : Msg -> Game -> ( Game, Cmd Msg )
 update msg game =
     case msg of
@@ -100,19 +86,9 @@ update msg game =
             ( { game | pirates = List.map Pirate.move game.pirates }, Cmd.none )
 
         MouseMove mousePosition ->
-            ( { game | towerPlacement = towerPlacement mousePosition game.map }
+            ( { game | towerPlacement = Tower.placement mousePosition game.map }
             , Cmd.none
             )
-
-
-renderTowerPlacement : Game -> Element
-renderTowerPlacement { map, towerPlacement } =
-    case towerPlacement of
-        Just tileNumber ->
-            Map.renderInvalidOverlayAt map tileNumber
-
-        Nothing ->
-            Element.empty
 
 
 viewMapAndEntities : Game -> Html a
@@ -120,7 +96,7 @@ viewMapAndEntities game =
     [ Map.render Map.level1
     , Entity.renderList <| List.map Pirate.toEntity game.pirates
     , Entity.render game.playerShip
-    , renderTowerPlacement game
+    , Tower.renderPlacement game.map game.towerPlacement
     , Path.renderList <| List.map .path game.pirates
     ]
         |> Element.layers
