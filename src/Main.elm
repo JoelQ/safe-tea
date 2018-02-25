@@ -17,6 +17,7 @@ type alias Game =
     , pirates : List Pirate
     , playerShip : Entity
     , towerPlacement : Tower.Placement
+    , towers : List Map.TileNumber
     }
 
 
@@ -56,6 +57,7 @@ initialGame =
     , pirates = [ pirate1, pirate2, pirate3 ]
     , playerShip = player
     , towerPlacement = Tower.noPlacement
+    , towers = []
     }
 
 
@@ -77,6 +79,7 @@ calculatePiratePath game pirate =
 type Msg
     = Tick
     | MouseMove Mouse.Position
+    | PlaceTower
 
 
 update : Msg -> Game -> ( Game, Cmd Msg )
@@ -90,6 +93,11 @@ update msg game =
             , Cmd.none
             )
 
+        PlaceTower ->
+            ( { game | towers = Tower.placeTower game.towers game.towerPlacement }
+            , Cmd.none
+            )
+
 
 viewMapAndEntities : Game -> Html a
 viewMapAndEntities game =
@@ -97,6 +105,7 @@ viewMapAndEntities game =
     , Entity.renderList <| List.map Pirate.toEntity game.pirates
     , Entity.render game.playerShip
     , Tower.renderPlacement game.map game.towerPlacement
+    , Tower.renderTowers game.map game.towers
     , Path.renderList <| List.map .path game.pirates
     ]
         |> Element.layers
@@ -147,6 +156,7 @@ subscriptions model =
     Sub.batch
         [ Time.every (33 * Time.millisecond) (always Tick)
         , Mouse.moves MouseMove
+        , Mouse.clicks (always PlaceTower)
         ]
 
 

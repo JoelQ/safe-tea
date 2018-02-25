@@ -1,4 +1,12 @@
-module Tower exposing (Placement, placement, renderPlacement, noPlacement)
+module Tower
+    exposing
+        ( Placement
+        , placement
+        , renderPlacement
+        , noPlacement
+        , renderTowers
+        , placeTower
+        )
 
 import Element exposing (Element)
 import Map exposing (Map, TileNumber, Pixels(..))
@@ -40,6 +48,16 @@ placement { x, y } map =
             NoPlacement
 
 
+placeTower : List TileNumber -> Placement -> List TileNumber
+placeTower towers placement =
+    case placement of
+        ValidPlacement tileNumber ->
+            tileNumber :: towers
+
+        _ ->
+            towers
+
+
 renderPlacement : Map -> Placement -> Element
 renderPlacement map towerPlacement =
     case towerPlacement of
@@ -55,9 +73,14 @@ renderPlacement map towerPlacement =
             Element.empty
 
 
+renderTowerSprite : Element
+renderTowerSprite =
+    Tile.render TileSheet.kennyPirates Tile.kennyPirateTower
+
+
 validPlacementOverlay : Element
 validPlacementOverlay =
-    Tile.render TileSheet.kennyPirates Tile.kennyPirateTower
+    renderTowerSprite
         |> Element.opacity 0.66
 
 
@@ -66,3 +89,10 @@ invalidPlacementOverlay { tileSide } =
     Element.spacer tileSide tileSide
         |> Element.color Color.red
         |> Element.opacity 0.3
+
+
+renderTowers : Map -> List TileNumber -> Element
+renderTowers map tileNumbers =
+    tileNumbers
+        |> List.map (\tn -> Map.renderAtTile map tn renderTowerSprite)
+        |> Element.layers
