@@ -89,7 +89,7 @@ update : Msg -> Game -> ( Game, Cmd Msg )
 update msg game =
     case msg of
         Tick ->
-            ( game |> applyMovement |> shoot, Cmd.none )
+            ( game |> applyMovement |> shoot |> detectCollisions, Cmd.none )
 
         MouseMove mousePosition ->
             ( { game | towerPlacement = Tower.placement mousePosition game.map }
@@ -108,6 +108,37 @@ applyMovement game =
         | pirates = List.map Pirate.move game.pirates
         , bullets = List.map Bullet.move game.bullets
     }
+
+
+collided : List Bullet -> Pirate -> Maybe ( Pirate, Bullet )
+collided bullets pirate =
+    bullets
+        |> List.filter
+            (\bullet ->
+                Coordinate.distance pirate.position bullet.position < 10
+            )
+        |> List.head
+        |> Maybe.map (\bullet -> ( pirate, bullet ))
+
+
+detectCollisions : Game -> Game
+detectCollisions game =
+    let
+        ( collidedPirates, collidedBullets ) =
+            game.pirates
+                |> List.filterMap (collided game.bullets)
+                |> List.unzip
+
+        remainingPirates =
+            List.filter (\p -> not (List.member p collidedPirates)) game.pirates
+
+        remainingBullets =
+            List.filter (\b -> not (List.member b collidedBullets)) game.bullets
+    in
+        { game
+            | pirates = remainingPirates
+            , bullets = remainingBullets
+        }
 
 
 shootPirate : Tower -> Maybe Pirate -> ( Tower, Maybe Bullet )
