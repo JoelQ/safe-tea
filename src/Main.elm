@@ -89,7 +89,12 @@ update : Msg -> Game -> ( Game, Cmd Msg )
 update msg game =
     case msg of
         Tick ->
-            ( game |> applyMovement |> shoot |> detectCollisions, Cmd.none )
+            game
+                |> applyMovement
+                |> shoot
+                |> detectCollisions
+                |> eliminateDead
+                |> (\g -> ( g, Cmd.none ))
 
         MouseMove mousePosition ->
             ( { game | towerPlacement = Tower.placement mousePosition game.map }
@@ -183,6 +188,11 @@ shoot ({ pirates, towers } as game) =
             | towers = shotTowers
             , bullets = game.bullets ++ List.filterMap identity bullets
         }
+
+
+eliminateDead : Game -> Game
+eliminateDead game =
+    { game | bullets = List.filter (\b -> b.position /= b.target) game.bullets }
 
 
 viewMapAndEntities : Game -> Html a
