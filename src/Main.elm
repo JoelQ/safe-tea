@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Bullet exposing (Bullet)
 import Html exposing (Html, text)
 import Map exposing (Map)
 import Mouse
@@ -9,7 +10,7 @@ import Entity exposing (Entity)
 import Path
 import Time
 import Coordinate
-import Tower
+import Tower exposing (Tower)
 
 
 type alias Game =
@@ -17,7 +18,8 @@ type alias Game =
     , pirates : List Pirate
     , playerShip : Entity
     , towerPlacement : Tower.Placement
-    , towers : List Map.TileNumber
+    , towers : List Tower
+    , bullets : List Bullet
     }
 
 
@@ -58,6 +60,7 @@ initialGame =
     , playerShip = player
     , towerPlacement = Tower.noPlacement
     , towers = []
+    , bullets = []
     }
 
 
@@ -86,7 +89,7 @@ update : Msg -> Game -> ( Game, Cmd Msg )
 update msg game =
     case msg of
         Tick ->
-            ( { game | pirates = List.map Pirate.move game.pirates }, Cmd.none )
+            ( game |> applyMovement |> shoot, Cmd.none )
 
         MouseMove mousePosition ->
             ( { game | towerPlacement = Tower.placement mousePosition game.map }
@@ -94,9 +97,61 @@ update msg game =
             )
 
         PlaceTower ->
-            ( { game | towers = Tower.placeTower game.towers game.towerPlacement }
+            ( { game | towers = Tower.placeTower game.map game.towers game.towerPlacement }
             , Cmd.none
             )
+
+
+applyMovement : Game -> Game
+applyMovement game =
+    { game
+        | pirates = List.map Pirate.move game.pirates
+        , bullets = List.map Bullet.move game.bullets
+    }
+
+
+shootPirate : Tower -> Maybe Pirate -> ( Tower, Maybe Bullet )
+shootPirate tower pirateInRange =
+    case pirateInRange of
+        Just pirate ->
+            let
+                bullet =
+                    Bullet.fireFrom tower.position
+                        |> Bullet.fireTowards pirate.position
+            in
+                ( { tower | hasShot = True }, Just bullet )
+
+        Nothing ->
+            ( tower, Nothing )
+
+
+shootNearbyPirates : List Pirate -> Tower -> ( Tower, Maybe Bullet )
+shootNearbyPirates pirates tower =
+    pirates
+        |> List.filter (\pirate -> Coordinate.distance tower.position pirate.position < Tower.maxRange)
+        |> List.head
+        |> shootPirate tower
+
+
+attemptToShootNearbyPirates : List Pirate -> Tower -> ( Tower, Maybe Bullet )
+attemptToShootNearbyPirates pirates tower =
+    if tower.hasShot then
+        ( tower, Nothing )
+    else
+        shootNearbyPirates pirates tower
+
+
+shoot : Game -> Game
+shoot ({ pirates, towers } as game) =
+    let
+        ( shotTowers, bullets ) =
+            List.map (attemptToShootNearbyPirates pirates) towers
+                |> List.unzip
+    in
+        { game
+            | towers = shotTowers
+            , bullets = game.bullets ++ List.filterMap identity bullets
+        }
 
 
 viewMapAndEntities : Game -> Html a
@@ -106,6 +161,7 @@ viewMapAndEntities game =
     , Entity.render game.playerShip
     , Tower.renderPlacement game.map game.towerPlacement
     , Tower.renderTowers game.map game.towers
+    , Entity.renderList <| List.map Bullet.toEntity game.bullets
     , Path.renderList <| List.map .path game.pirates
     ]
         |> Element.layers

@@ -1,25 +1,48 @@
 module Tower
     exposing
         ( Placement
+        , Tower
         , placement
         , renderPlacement
         , noPlacement
         , renderTowers
         , placeTower
+        , maxRange
         )
 
 import Element exposing (Element)
-import Map exposing (Map, TileNumber, Pixels(..))
+import Map exposing (Map, Pixels(..))
 import Mouse
 import Tile
 import TileSheet exposing (TileSheet)
 import Color
+import Coordinate
+
+
+type alias Tower =
+    { hasShot : Bool
+    , tileNumber : Map.TileNumber
+    , position : Coordinate.Global
+    }
+
+
+fromTileNumber : Map -> Map.TileNumber -> Tower
+fromTileNumber map tileNumber =
+    { hasShot = False
+    , tileNumber = tileNumber
+    , position = Map.centerOfTile map tileNumber
+    }
+
+
+maxRange : Int
+maxRange =
+    100
 
 
 type Placement
     = NoPlacement
-    | InvalidPlacement TileNumber
-    | ValidPlacement TileNumber
+    | InvalidPlacement Map.TileNumber
+    | ValidPlacement Map.TileNumber
 
 
 noPlacement : Placement
@@ -48,11 +71,11 @@ placement { x, y } map =
             NoPlacement
 
 
-placeTower : List TileNumber -> Placement -> List TileNumber
-placeTower towers placement =
+placeTower : Map -> List Tower -> Placement -> List Tower
+placeTower map towers placement =
     case placement of
         ValidPlacement tileNumber ->
-            tileNumber :: towers
+            (fromTileNumber map tileNumber) :: towers
 
         _ ->
             towers
@@ -91,8 +114,8 @@ invalidPlacementOverlay { tileSide } =
         |> Element.opacity 0.3
 
 
-renderTowers : Map -> List TileNumber -> Element
-renderTowers map tileNumbers =
-    tileNumbers
-        |> List.map (\tn -> Map.renderAtTile map tn renderTowerSprite)
+renderTowers : Map -> List Tower -> Element
+renderTowers map towers =
+    towers
+        |> List.map (\{ tileNumber } -> Map.renderAtTile map tileNumber renderTowerSprite)
         |> Element.layers

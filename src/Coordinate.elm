@@ -7,6 +7,8 @@ module Coordinate
         , toTuple
         , fromGlobalXY
         , setMagnitude
+        , distance
+        , toTileCenter
         )
 
 import Euclid.Vector as Vector
@@ -53,3 +55,17 @@ setMagnitude mag (Local position) =
         Vector.fromPolar theta (toFloat mag)
             |> Vector.map round
             |> Local
+
+
+distance : Global -> Global -> Int
+distance (Global position1) (Global position2) =
+    position1
+        |> Vector.subtract position2
+        |> Vector.abs
+
+
+toTileCenter : Int -> Global -> Global
+toTileCenter tileWidth (Global currentPosition) =
+    Vector.vec (tileWidth // 2) (tileWidth // 2)
+        |> Vector.add currentPosition
+        |> Global

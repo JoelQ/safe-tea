@@ -5,14 +5,21 @@ import AStar
 import Element exposing (Element)
 import Collage exposing (defaultLine)
 import Color
+import Coordinate
 
 
 fromTo : Map -> ( Int, Int ) -> ( Int, Int ) -> Maybe AStar.Path
 fromTo map fromCoords ( toX, toY ) =
-    AStar.findPath AStar.straightLineCost
-        (Map.validMovesFrom map)
-        fromCoords
-        (Map.centerOfTile map <| Map.tileNumberFromCoords toX toY map)
+    let
+        destination =
+            Map.tileNumberFromCoords toX toY map
+                |> Map.centerOfTile map
+                |> Coordinate.toTuple
+    in
+        AStar.findPath AStar.straightLineCost
+            (Map.validMovesFrom map)
+            fromCoords
+            destination
 
 
 renderList : List (Maybe AStar.Path) -> Element

@@ -20,6 +20,7 @@ import List.Extra
 import Set exposing (Set)
 import Tile exposing (Tile(..))
 import TileSheet exposing (TileSheet)
+import Coordinate
 
 
 type Pixels
@@ -365,7 +366,7 @@ renderAtTile : Map -> TileNumber -> Element -> Element
 renderAtTile ({ sheet } as map) tileNumber element =
     let
         ( x, y ) =
-            topLeftCornerOfTile map tileNumber
+            Coordinate.toTuple <| topLeftCornerOfTile map tileNumber
 
         screenPosition =
             Element.topLeftAt (Element.absolute x) (Element.absolute y)
@@ -505,11 +506,11 @@ neighboringTiles ({ width, sheet } as map) ( x, y ) =
 validMovesFrom : Map -> ( Int, Int ) -> Set ( Int, Int )
 validMovesFrom map position =
     passableNeighboringTiles map position
-        |> List.map (centerOfTile map)
+        |> List.map (Coordinate.toTuple << centerOfTile map)
         |> Set.fromList
 
 
-topLeftCornerOfTile : Map -> TileNumber -> ( Int, Int )
+topLeftCornerOfTile : Map -> TileNumber -> Coordinate.Global
 topLeftCornerOfTile { sheet, width } (TileNumber tileNumber) =
     let
         xEdge =
@@ -518,14 +519,13 @@ topLeftCornerOfTile { sheet, width } (TileNumber tileNumber) =
         yEdge =
             sheet.tileSide * (tileNumber // width)
     in
-        ( xEdge, yEdge )
+        Coordinate.fromGlobalXY xEdge yEdge
 
 
-centerOfTile : Map -> TileNumber -> ( Int, Int )
+centerOfTile : Map -> TileNumber -> Coordinate.Global
 centerOfTile map tileNumber =
     topLeftCornerOfTile map tileNumber
-        |> Tuple.mapFirst (\x -> x + (map.sheet.tileSide // 2))
-        |> Tuple.mapSecond (\y -> y + (map.sheet.tileSide // 2))
+        |> Coordinate.toTileCenter map.sheet.tileSide
 
 
 passableTile : Int -> Tile -> Maybe TileNumber
