@@ -6,7 +6,7 @@ pun 😎 )
 
 Play the game online on itch.io: https://joelq.itch.io/safe-tea
 
-![In-game screenshot](https://user-images.githubusercontent.com/1006966/36771084-392d6db4-1c1c-11e8-9ec4-fd5a9dcad52b.png)
+![In-game screenshot](https://user-images.githubusercontent.com/1006966/36791301-6cad04d0-1c65-11e8-96e2-1595f10c030e.png)
 
 ## Running
 
