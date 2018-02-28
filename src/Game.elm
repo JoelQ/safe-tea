@@ -28,6 +28,7 @@ import Map exposing (Map)
 import Mouse
 import Path
 import Pirate exposing (Pirate)
+import Player exposing (Player)
 import Text
 import Tower exposing (Tower)
 
@@ -43,7 +44,7 @@ type Game
 type alias PlacementState =
     { map : Map
     , towerPlacement : Tower.Placement
-    , playerShip : Entity
+    , playerShip : Player
     , towers : List Tower
     }
 
@@ -51,7 +52,7 @@ type alias PlacementState =
 type alias GameState =
     { map : Map
     , pirates : List Pirate
-    , playerShip : Entity
+    , playerShip : Player
     , towers : List Tower
     , bullets : List Bullet
     }
@@ -66,12 +67,9 @@ initialGame =
     IntroPhase Map.level1
 
 
-player : Entity
-player =
+initialPlayer : Player
+initialPlayer =
     { position = Coordinate.fromGlobalXY 416 608
-    , width = 33
-    , height = 56
-    , imagePath = "../images/player-ship.png"
     }
 
 
@@ -104,7 +102,7 @@ startPlacement : Map -> Game
 startPlacement map =
     TowerPlacementPhase
         { map = map
-        , playerShip = player
+        , playerShip = initialPlayer
         , towerPlacement = Tower.noPlacement
         , towers = []
         }
@@ -141,7 +139,7 @@ checkForGameEnd ({ pirates, playerShip } as gameState) =
         AttackPhase gameState
 
 
-canPlunderPlayer : Entity -> Pirate -> Bool
+canPlunderPlayer : Player -> Pirate -> Bool
 canPlunderPlayer player pirate =
     (Coordinate.distance player.position pirate.position) < 10
 
@@ -298,7 +296,7 @@ viewIntroPhase map =
 viewTowerPlacementPhase : PlacementState -> Html a
 viewTowerPlacementPhase { map, playerShip, towerPlacement, towers } =
     [ Map.render map
-    , Entity.render playerShip
+    , Entity.render <| Player.toEntity playerShip
     , Tower.renderPlacement map towerPlacement
     , Tower.renderTowers map towers
     ]
@@ -371,7 +369,7 @@ renderGameState : GameState -> Element
 renderGameState gameState =
     [ Map.render gameState.map
     , Entity.renderList <| List.map Pirate.toEntity gameState.pirates
-    , Entity.render gameState.playerShip
+    , Entity.render <| Player.toEntity gameState.playerShip
     , Tower.renderTowers gameState.map gameState.towers
     , Entity.renderList <| List.map Bullet.toEntity gameState.bullets
     ]
