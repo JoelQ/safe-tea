@@ -16,7 +16,16 @@ import Tower exposing (Tower)
 
 type Game
     = IntroPhase Map
+    | TowerPlacementPhase PlacementState
     | AttackPhase GameState
+
+
+type alias PlacementState =
+    { map : Map
+    , towerPlacement : Tower.Placement
+    , playerShip : Entity
+    , towers : List Tower
+    }
 
 
 type alias GameState =
@@ -71,6 +80,16 @@ pirate3 =
 --     }
 
 
+startPlacement : Map -> Game
+startPlacement map =
+    TowerPlacementPhase
+        { map = map
+        , playerShip = player
+        , towerPlacement = Tower.noPlacement
+        , towers = []
+        }
+
+
 initialGame : Game
 initialGame =
     IntroPhase Map.level1
@@ -95,12 +114,23 @@ type Msg
     = Tick
     | MouseMove Mouse.Position
     | PlaceTower
+    | StartPlacement
 
 
 update : Msg -> Game -> ( Game, Cmd Msg )
 update msg gamePhase =
     case gamePhase of
         IntroPhase map ->
+            case msg of
+                StartPlacement ->
+                    startPlacement map
+                        |> (\g -> ( g, Cmd.none ))
+
+                _ ->
+                    gamePhase
+                        |> (\g -> ( g, Cmd.none ))
+
+        TowerPlacementPhase placementState ->
             gamePhase
                 |> (\g -> ( g, Cmd.none ))
 
@@ -124,6 +154,11 @@ update msg gamePhase =
                 PlaceTower ->
                     gameState
                         |> placeTower
+                        |> AttackPhase
+                        |> (\g -> ( g, Cmd.none ))
+
+                _ ->
+                    gameState
                         |> AttackPhase
                         |> (\g -> ( g, Cmd.none ))
 
@@ -280,6 +315,11 @@ view game =
                 [ viewIntroPhase map
                 ]
 
+        TowerPlacementPhase placementState ->
+            Html.div []
+                [ Map.render placementState.map |> Element.toHtml
+                ]
+
         AttackPhase gameState ->
             Html.div []
                 [ viewAttackPhase gameState
@@ -290,6 +330,9 @@ subscriptions : Game -> Sub Msg
 subscriptions game =
     case game of
         IntroPhase _ ->
+            Mouse.clicks (always StartPlacement)
+
+        TowerPlacementPhase _ ->
             Sub.none
 
         AttackPhase _ ->
