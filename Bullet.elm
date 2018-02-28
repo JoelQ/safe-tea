@@ -6,6 +6,7 @@ module Bullet
         , fireFrom
         , move
         , impact
+        , keepExploding
         , isDead
         )
 
@@ -16,6 +17,7 @@ import Time exposing (Time)
 
 type Status
     = Flying
+    | Exploding Time
     | Impacted
 
 
@@ -41,6 +43,16 @@ fireTowards targetPosition bullet =
 
 move : Time -> Bullet -> Bullet
 move diff bullet =
+    case bullet.status of
+        Flying ->
+            moveTheBullet diff bullet
+
+        _ ->
+            bullet
+
+
+moveTheBullet : Time -> Bullet -> Bullet
+moveTheBullet diff bullet =
     let
         distanceToNextPoint =
             Coordinate.distance bullet.position bullet.target
@@ -63,7 +75,20 @@ move diff bullet =
 
 impact : Bullet -> Bullet
 impact bullet =
-    { bullet | status = Impacted }
+    { bullet | status = Exploding 0 }
+
+
+keepExploding : Time -> Bullet -> Bullet
+keepExploding diff bullet =
+    case bullet.status of
+        Exploding timeSoFar ->
+            if ceiling (timeSoFar / explosionSpeed) > 3 then
+                { bullet | status = Impacted }
+            else
+                { bullet | status = Exploding (timeSoFar + diff) }
+
+        _ ->
+            bullet
 
 
 isDead : Bullet -> Bool
@@ -77,9 +102,56 @@ speedPerSecond =
 
 
 toEntity : Bullet -> Entity
-toEntity { position } =
+toEntity { position, status } =
+    case status of
+        Exploding diff ->
+            if ceiling (diff / explosionSpeed) == 1 then
+                explosionPhase1 position diff
+            else if ceiling (diff / explosionSpeed) == 2 then
+                explosionPhase2 position diff
+            else
+                explosionPhase3 position diff
+
+        _ ->
+            regularBulletEntity position
+
+
+regularBulletEntity : Coordinate.Global -> Entity
+regularBulletEntity position =
     { position = position
     , width = 10
     , height = 10
     , imagePath = "images/cannon-ball.png"
     }
+
+
+explosionPhase1 : Coordinate.Global -> Time -> Entity
+explosionPhase1 position timeSoFar =
+    { position = position
+    , width = 50
+    , height = 50
+    , imagePath = "images/explosion1.png"
+    }
+
+
+explosionPhase2 : Coordinate.Global -> Time -> Entity
+explosionPhase2 position timeSoFar =
+    { position = position
+    , width = 75
+    , height = 75
+    , imagePath = "images/explosion2.png"
+    }
+
+
+explosionPhase3 : Coordinate.Global -> Time -> Entity
+explosionPhase3 position timeSoFar =
+    { position = position
+    , width = 50
+    , height = 50
+    , imagePath = "images/explosion3.png"
+    }
+
+
+explosionSpeed : Time
+explosionSpeed =
+    Time.second / 20

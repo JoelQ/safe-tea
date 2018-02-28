@@ -52,6 +52,7 @@ update msg gamePhase =
                         |> Game.applyMovement diff
                         |> Game.shoot diff
                         |> Game.detectCollisions
+                        |> Game.processExplosions diff
                         |> Game.eliminateDead
                         |> Game.checkForGameEnd
                         |> withNoCmd

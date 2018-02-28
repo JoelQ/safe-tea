@@ -11,6 +11,7 @@ module Game
         , shoot
         , detectCollisions
         , eliminateDead
+        , processExplosions
         , viewIntroPhase
         , viewTowerPlacementPhase
         , viewAttackPhase
@@ -247,6 +248,11 @@ eliminateDead game =
         | bullets = List.filter (not << Bullet.isDead) game.bullets
         , pirates = List.filter (not << Pirate.isDead) game.pirates
     }
+
+
+processExplosions : Time -> GameState -> GameState
+processExplosions diff ({ bullets } as gameState) =
+    { gameState | bullets = List.map (Bullet.keepExploding diff) bullets }
 
 
 
