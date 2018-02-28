@@ -34,11 +34,17 @@ import Tower exposing (Tower)
 
 
 type Game
-    = IntroPhase Map
+    = IntroPhase IntroState
     | TowerPlacementPhase PlacementState
     | AttackPhase GameState
     | Victory GameState
     | Defeat GameState
+
+
+type alias IntroState =
+    { map : Map
+    , playerShip : Player
+    }
 
 
 type alias PlacementState =
@@ -64,7 +70,10 @@ type alias GameState =
 
 initialGame : Game
 initialGame =
-    IntroPhase Map.level1
+    IntroPhase
+        { map = Map.level1
+        , playerShip = initialPlayer
+        }
 
 
 initialPlayer : Player
@@ -98,11 +107,11 @@ pirate3 =
 -- TRANSITIONS
 
 
-startPlacement : Map -> Game
-startPlacement map =
+startPlacement : IntroState -> Game
+startPlacement { map, playerShip } =
     TowerPlacementPhase
         { map = map
-        , playerShip = initialPlayer
+        , playerShip = playerShip
         , towerPlacement = Tower.noPlacement
         , towers = []
         }
@@ -281,16 +290,25 @@ attemptToShootNearbyPirates pirates tower =
 -- VIEW
 
 
-viewIntroPhase : Map -> Html a
-viewIntroPhase map =
-    [ Map.render map |> Element.opacity 0.3
-    , Text.fromString introText
-        |> Text.height 30
-        |> Text.typeface [ "helvetica", "arial", "sans-serif" ]
-        |> Element.centered
-    ]
-        |> Element.layers
-        |> Element.toHtml
+viewIntroPhase : IntroState -> Html a
+viewIntroPhase { map, playerShip } =
+    let
+        background =
+            [ Map.render map
+            , Entity.render <| Player.toEntity playerShip
+            ]
+                |> Element.layers
+                |> Element.opacity 0.3
+
+        text =
+            Text.fromString introText
+                |> Text.height 30
+                |> Text.typeface [ "helvetica", "arial", "sans-serif" ]
+                |> Element.centered
+    in
+        [ background, text ]
+            |> Element.layers
+            |> Element.toHtml
 
 
 viewTowerPlacementPhase : PlacementState -> Html a

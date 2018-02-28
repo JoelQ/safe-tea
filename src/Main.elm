@@ -16,10 +16,10 @@ type Msg
 update : Msg -> Game -> ( Game, Cmd Msg )
 update msg gamePhase =
     case gamePhase of
-        IntroPhase map ->
+        IntroPhase introState ->
             case msg of
                 StartPlacement ->
-                    Game.startPlacement map
+                    Game.startPlacement introState
                         |> withNoCmd
 
                 _ ->
