@@ -16,7 +16,7 @@ Assuming you have Elm 0.18 installed:
 2. Run `elm package install`
 3. Run `elm reactor`
 
-Visit `http://localhost:8000/src/Main.elm` and play the game.
+Visit `http://localhost:8000/Main.elm` and play the game.
 
 ## License
 
