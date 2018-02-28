@@ -34,7 +34,7 @@ fromTileNumber map tileNumber =
     }
 
 
-maxRange : Int
+maxRange : number
 maxRange =
     100
 

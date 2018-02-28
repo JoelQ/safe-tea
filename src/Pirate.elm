@@ -6,6 +6,7 @@ import Map exposing (Map)
 import AStar
 import Euclid.Vector as Vector
 import Coordinate
+import Time exposing (Time)
 
 
 type alias Pirate =
@@ -24,16 +25,19 @@ toEntity { position } =
     }
 
 
-move : Pirate -> Pirate
-move pirate =
+move : Time -> Pirate -> Pirate
+move diff pirate =
     case pirate.path of
         Just (nextPoint :: rest) ->
             let
                 distanceToNextPoint =
                     AStar.pythagoreanCost (Coordinate.toTuple pirate.position)
                         nextPoint
+
+                distanceInThisInterval =
+                    (Time.inSeconds diff) * speedPerSecond
             in
-                if (round distanceToNextPoint) > speed then
+                if distanceToNextPoint > distanceInThisInterval then
                     let
                         ( nextX, nextY ) =
                             nextPoint
@@ -41,7 +45,7 @@ move pirate =
                         thisTickG =
                             Coordinate.fromGlobalXY nextX nextY
                                 |> Coordinate.toLocal pirate.position
-                                |> Coordinate.setMagnitude speed
+                                |> Coordinate.setMagnitude distanceInThisInterval
                                 |> Coordinate.toGlobal pirate.position
                     in
                         { pirate | position = thisTickG }
@@ -84,6 +88,6 @@ height =
     56
 
 
-speed : Int
-speed =
-    2
+speedPerSecond : number
+speedPerSecond =
+    60

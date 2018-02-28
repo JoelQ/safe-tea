@@ -44,7 +44,7 @@ toLocal (Global offset) (Global position) =
         |> Local
 
 
-setMagnitude : Int -> Local -> Local
+setMagnitude : Float -> Local -> Local
 setMagnitude mag (Local position) =
     let
         theta =
@@ -52,15 +52,16 @@ setMagnitude mag (Local position) =
                 |> Vector.map toFloat
                 |> Vector.arg
     in
-        Vector.fromPolar theta (toFloat mag)
+        Vector.fromPolar theta mag
             |> Vector.map round
             |> Local
 
 
-distance : Global -> Global -> Int
+distance : Global -> Global -> Float
 distance (Global position1) (Global position2) =
     position1
-        |> Vector.subtract position2
+        |> Vector.map toFloat
+        |> Vector.subtract (Vector.map toFloat position2)
         |> Vector.abs
 
 

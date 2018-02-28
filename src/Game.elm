@@ -30,6 +30,7 @@ import Path
 import Pirate exposing (Pirate)
 import Player exposing (Player)
 import Text
+import Time exposing (Time)
 import Tower exposing (Tower)
 
 
@@ -193,11 +194,11 @@ placeTower ({ map, towers, towerPlacement } as placementState) =
 -- TICK GAME STATE
 
 
-applyMovement : GameState -> GameState
-applyMovement game =
+applyMovement : Time -> GameState -> GameState
+applyMovement diff game =
     { game
-        | pirates = List.map Pirate.move game.pirates
-        , bullets = List.map Bullet.move game.bullets
+        | pirates = List.map (Pirate.move diff) game.pirates
+        , bullets = List.map (Bullet.move diff) game.bullets
     }
 
 

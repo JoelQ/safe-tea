@@ -1,13 +1,14 @@
 module Main exposing (main)
 
+import AnimationFrame
 import Game exposing (Game(..))
 import Html exposing (Html, text)
 import Mouse
-import Time
+import Time exposing (Time)
 
 
 type Msg
-    = Tick
+    = Tick Time
     | MouseMove Mouse.Position
     | PlaceTower
     | StartPlacement
@@ -46,9 +47,9 @@ update msg gamePhase =
 
         AttackPhase gameState ->
             case msg of
-                Tick ->
+                Tick diff ->
                     gameState
-                        |> Game.applyMovement
+                        |> Game.applyMovement diff
                         |> Game.shoot
                         |> Game.detectCollisions
                         |> Game.eliminateDead
@@ -106,7 +107,7 @@ subscriptions game =
                 ]
 
         AttackPhase _ ->
-            Time.every (33 * Time.millisecond) (always Tick)
+            AnimationFrame.diffs Tick
 
         Victory _ ->
             Sub.none

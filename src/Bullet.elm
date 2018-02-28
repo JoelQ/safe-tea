@@ -11,6 +11,7 @@ module Bullet
 
 import Coordinate
 import Entity exposing (Entity)
+import Time exposing (Time)
 
 
 type Status
@@ -38,18 +39,21 @@ fireTowards targetPosition bullet =
     { bullet | target = targetPosition }
 
 
-move : Bullet -> Bullet
-move bullet =
+move : Time -> Bullet -> Bullet
+move diff bullet =
     let
         distanceToNextPoint =
             Coordinate.distance bullet.position bullet.target
+
+        distanceInThisInterval =
+            (Time.inSeconds diff) * speedPerSecond
     in
-        if distanceToNextPoint > speed then
+        if distanceToNextPoint > distanceInThisInterval then
             let
                 thisTickG =
                     bullet.target
                         |> Coordinate.toLocal bullet.position
-                        |> Coordinate.setMagnitude speed
+                        |> Coordinate.setMagnitude distanceInThisInterval
                         |> Coordinate.toGlobal bullet.position
             in
                 { bullet | position = thisTickG }
@@ -67,9 +71,9 @@ isDead { position, target, status } =
     status == Impacted || position == target
 
 
-speed : Int
-speed =
-    10
+speedPerSecond : number
+speedPerSecond =
+    300
 
 
 toEntity : Bullet -> Entity
