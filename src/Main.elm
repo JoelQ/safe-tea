@@ -30,11 +30,11 @@ update msg gamePhase =
             case msg of
                 StartPlacement ->
                     Game.startPlacement map
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
                 _ ->
                     gamePhase
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
         TowerPlacementPhase placementState ->
             case msg of
@@ -42,17 +42,17 @@ update msg gamePhase =
                     placementState
                         |> Game.calculateTowerPlacement mousePosition
                         |> TowerPlacementPhase
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
                 PlaceTower ->
                     placementState
                         |> Game.placeTower
                         |> Game.transitionToAttackIfMaxTowers
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
                 _ ->
                     gamePhase
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
         AttackPhase gameState ->
             case msg of
@@ -63,20 +63,25 @@ update msg gamePhase =
                         |> Game.detectCollisions
                         |> Game.eliminateDead
                         |> Game.checkForGameEnd
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
                 _ ->
                     gameState
                         |> AttackPhase
-                        |> (\g -> ( g, Cmd.none ))
+                        |> withNoCmd
 
         Victory _ ->
             gamePhase
-                |> (\g -> ( g, Cmd.none ))
+                |> withNoCmd
 
         Defeat _ ->
             gamePhase
-                |> (\g -> ( g, Cmd.none ))
+                |> withNoCmd
+
+
+withNoCmd : Game -> ( Game, Cmd Msg )
+withNoCmd game =
+    ( game, Cmd.none )
 
 
 view : Game -> Html Msg
