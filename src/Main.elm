@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Bullet exposing (Bullet)
+import Collage
 import Html exposing (Html, text)
 import Map exposing (Map)
 import Mouse
@@ -18,6 +19,7 @@ type Game
     = IntroPhase Map
     | TowerPlacementPhase PlacementState
     | AttackPhase GameState
+    | Victory GameState
 
 
 type alias PlacementState =
@@ -98,6 +100,14 @@ toAttackState placementState =
     }
 
 
+checkForGameEnd : GameState -> Game
+checkForGameEnd gameState =
+    if List.isEmpty gameState.pirates then
+        Victory gameState
+    else
+        AttackPhase gameState
+
+
 initialGame : Game
 initialGame =
     IntroPhase Map.level1
@@ -164,13 +174,17 @@ update msg gamePhase =
                         |> shoot
                         |> detectCollisions
                         |> eliminateDead
-                        |> AttackPhase
+                        |> checkForGameEnd
                         |> (\g -> ( g, Cmd.none ))
 
                 _ ->
                     gameState
                         |> AttackPhase
                         |> (\g -> ( g, Cmd.none ))
+
+        Victory _ ->
+            gamePhase
+                |> (\g -> ( g, Cmd.none ))
 
 
 calculateTowerPlacement : Mouse.Position -> PlacementState -> PlacementState
@@ -286,14 +300,39 @@ viewTowerPlacementPhase { map, playerShip, towerPlacement, towers } =
         |> Element.toHtml
 
 
-viewAttackPhase : GameState -> Html a
-viewAttackPhase gameState =
+renderGameState : GameState -> Element
+renderGameState gameState =
     [ Map.render gameState.map
     , Entity.renderList <| List.map Pirate.toEntity gameState.pirates
     , Entity.render gameState.playerShip
     , Tower.renderTowers gameState.map gameState.towers
     , Entity.renderList <| List.map Bullet.toEntity gameState.bullets
     , Path.renderList <| List.map .path gameState.pirates
+    ]
+        |> Element.layers
+
+
+viewAttackPhase : GameState -> Html a
+viewAttackPhase gameState =
+    gameState
+        |> renderGameState
+        |> Element.toHtml
+
+
+viewVictoryScreen : GameState -> Html a
+viewVictoryScreen gameState =
+    [ gameState
+        |> renderGameState
+        |> Element.opacity 0.3
+    , "Safe Tea!"
+        |> Text.fromString
+        |> Text.height 150
+        |> Text.typeface [ "helvetica", "arial", "sans-serif" ]
+        |> Element.centered
+        |> Collage.toForm
+        |> Collage.moveY 150
+        |> List.singleton
+        |> Collage.collage 960 960
     ]
         |> Element.layers
         |> Element.toHtml
@@ -345,6 +384,11 @@ view game =
                 [ viewAttackPhase gameState
                 ]
 
+        Victory gameState ->
+            Html.div []
+                [ viewVictoryScreen gameState
+                ]
+
 
 subscriptions : Game -> Sub Msg
 subscriptions game =
@@ -364,6 +408,9 @@ subscriptions game =
                 , Mouse.moves MouseMove
                 , Mouse.clicks (always PlaceTower)
                 ]
+
+        Victory _ ->
+            Sub.none
 
 
 main : Program Never Game Msg
