@@ -319,7 +319,6 @@ renderGameState gameState =
     , Entity.render gameState.playerShip
     , Tower.renderTowers gameState.map gameState.towers
     , Entity.renderList <| List.map Bullet.toEntity gameState.bullets
-    , Path.renderList <| List.map .path gameState.pirates
     ]
         |> Element.layers
 
@@ -439,11 +438,7 @@ subscriptions game =
                 ]
 
         AttackPhase _ ->
-            Sub.batch
-                [ Time.every (33 * Time.millisecond) (always Tick)
-                , Mouse.moves MouseMove
-                , Mouse.clicks (always PlaceTower)
-                ]
+            Time.every (33 * Time.millisecond) (always Tick)
 
         Victory _ ->
             Sub.none
