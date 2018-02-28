@@ -32,7 +32,6 @@ type alias GameState =
     { map : Map
     , pirates : List Pirate
     , playerShip : Entity
-    , towerPlacement : Tower.Placement
     , towers : List Tower
     , bullets : List Bullet
     }
@@ -68,18 +67,6 @@ pirate3 =
     }
 
 
-
--- initialGame : Game
--- initialGame =
---     { map = Map.level1
---     , pirates = [ pirate1, pirate2, pirate3 ]
---     , playerShip = player
---     , towerPlacement = Tower.noPlacement
---     , towers = []
---     , bullets = []
---     }
-
-
 startPlacement : Map -> Game
 startPlacement map =
     TowerPlacementPhase
@@ -88,6 +75,27 @@ startPlacement map =
         , towerPlacement = Tower.noPlacement
         , towers = []
         }
+
+
+transitionToAttackIfMaxTowers : PlacementState -> Game
+transitionToAttackIfMaxTowers placementState =
+    if List.length placementState.towers >= 3 then
+        placementState
+            |> toAttackState
+            |> calculatesPaths
+            |> AttackPhase
+    else
+        TowerPlacementPhase placementState
+
+
+toAttackState : PlacementState -> GameState
+toAttackState placementState =
+    { map = placementState.map
+    , playerShip = placementState.playerShip
+    , towers = placementState.towers
+    , pirates = [ pirate1, pirate2, pirate3 ]
+    , bullets = []
+    }
 
 
 initialGame : Game
@@ -141,7 +149,7 @@ update msg gamePhase =
                 PlaceTower ->
                     placementState
                         |> placeTower
-                        |> TowerPlacementPhase
+                        |> transitionToAttackIfMaxTowers
                         |> (\g -> ( g, Cmd.none ))
 
                 _ ->
@@ -283,7 +291,6 @@ viewAttackPhase gameState =
     [ Map.render gameState.map
     , Entity.renderList <| List.map Pirate.toEntity gameState.pirates
     , Entity.render gameState.playerShip
-    , Tower.renderPlacement gameState.map gameState.towerPlacement
     , Tower.renderTowers gameState.map gameState.towers
     , Entity.renderList <| List.map Bullet.toEntity gameState.bullets
     , Path.renderList <| List.map .path gameState.pirates
