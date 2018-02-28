@@ -14,5 +14,5 @@ toEntity { position } =
     { position = position
     , width = 33
     , height = 56
-    , imagePath = "../images/player-ship.png"
+    , imagePath = "images/player-ship.png"
     }

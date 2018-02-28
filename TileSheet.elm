@@ -12,5 +12,5 @@ kennyPirates : TileSheet
 kennyPirates =
     { sheetWidth = 16
     , tileSide = 64
-    , source = "../images/tiles_sheet.png"
+    , source = "images/tiles_sheet.png"
     }

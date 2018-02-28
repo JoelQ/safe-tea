@@ -4,7 +4,7 @@
     "repository": "https://github.com/JoelQ/safe-tea.git",
     "license": "MIT",
     "source-directories": [
-        "src"
+        "."
     ],
     "exposed-modules": [],
     "dependencies": {

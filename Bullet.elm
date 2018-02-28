@@ -81,5 +81,5 @@ toEntity { position } =
     { position = position
     , width = 10
     , height = 10
-    , imagePath = "../images/cannon-ball.png"
+    , imagePath = "images/cannon-ball.png"
     }

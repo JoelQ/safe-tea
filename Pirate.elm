@@ -75,7 +75,7 @@ isDead { health } =
 
 imagePath : String
 imagePath =
-    "../images/pirate-new.png"
+    "images/pirate-new.png"
 
 
 width : Int
