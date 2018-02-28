@@ -20,6 +20,7 @@ type Game
     | TowerPlacementPhase PlacementState
     | AttackPhase GameState
     | Victory GameState
+    | Defeat GameState
 
 
 type alias PlacementState =
@@ -100,10 +101,17 @@ toAttackState placementState =
     }
 
 
+canPlunderPlayer : Entity -> Pirate -> Bool
+canPlunderPlayer player pirate =
+    (Coordinate.distance player.position pirate.position) < 10
+
+
 checkForGameEnd : GameState -> Game
-checkForGameEnd gameState =
-    if List.isEmpty gameState.pirates then
+checkForGameEnd ({ pirates, playerShip } as gameState) =
+    if List.isEmpty pirates then
         Victory gameState
+    else if List.any (canPlunderPlayer playerShip) pirates then
+        Defeat gameState
     else
         AttackPhase gameState
 
@@ -183,6 +191,10 @@ update msg gamePhase =
                         |> (\g -> ( g, Cmd.none ))
 
         Victory _ ->
+            gamePhase
+                |> (\g -> ( g, Cmd.none ))
+
+        Defeat _ ->
             gamePhase
                 |> (\g -> ( g, Cmd.none ))
 
@@ -338,6 +350,25 @@ viewVictoryScreen gameState =
         |> Element.toHtml
 
 
+viewDefeatScreen : GameState -> Html a
+viewDefeatScreen gameState =
+    [ gameState
+        |> renderGameState
+        |> Element.opacity 0.3
+    , "Defeat!"
+        |> Text.fromString
+        |> Text.height 150
+        |> Text.typeface [ "helvetica", "arial", "sans-serif" ]
+        |> Element.centered
+        |> Collage.toForm
+        |> Collage.moveY 150
+        |> List.singleton
+        |> Collage.collage 960 960
+    ]
+        |> Element.layers
+        |> Element.toHtml
+
+
 introText : String
 introText =
     """
@@ -389,6 +420,11 @@ view game =
                 [ viewVictoryScreen gameState
                 ]
 
+        Defeat gameState ->
+            Html.div []
+                [ viewDefeatScreen gameState
+                ]
+
 
 subscriptions : Game -> Sub Msg
 subscriptions game =
@@ -410,6 +446,9 @@ subscriptions game =
                 ]
 
         Victory _ ->
+            Sub.none
+
+        Defeat _ ->
             Sub.none
 
 
