@@ -86,6 +86,7 @@ pirate1 : Pirate
 pirate1 =
     { position = Coordinate.fromGlobalXY 928 544
     , path = Nothing
+    , health = 1
     }
 
 
@@ -93,6 +94,7 @@ pirate2 : Pirate
 pirate2 =
     { position = Coordinate.fromGlobalXY 672 928
     , path = Nothing
+    , health = 1
     }
 
 
@@ -100,6 +102,7 @@ pirate3 : Pirate
 pirate3 =
     { position = Coordinate.fromGlobalXY 325 32
     , path = Nothing
+    , health = 1
     }
 
 
@@ -206,6 +209,12 @@ detectCollisions game =
                 |> List.filterMap (collided game.bullets)
                 |> List.unzip
 
+        impactedBullets =
+            List.map Bullet.impact collidedBullets
+
+        impactedPirates =
+            List.map Pirate.takeAHit collidedPirates
+
         remainingPirates =
             List.filter (\p -> not (List.member p collidedPirates)) game.pirates
 
@@ -213,8 +222,8 @@ detectCollisions game =
             List.filter (\b -> not (List.member b collidedBullets)) game.bullets
     in
         { game
-            | pirates = remainingPirates
-            , bullets = remainingBullets
+            | pirates = remainingPirates ++ impactedPirates
+            , bullets = remainingBullets ++ impactedBullets
         }
 
 
@@ -233,7 +242,10 @@ shoot ({ pirates, towers } as game) =
 
 eliminateDead : GameState -> GameState
 eliminateDead game =
-    { game | bullets = List.filter (\b -> b.position /= b.target) game.bullets }
+    { game
+        | bullets = List.filter (not << Bullet.isDead) game.bullets
+        , pirates = List.filter (not << Pirate.isDead) game.pirates
+    }
 
 
 

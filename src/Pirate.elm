@@ -1,4 +1,4 @@
-module Pirate exposing (Pirate, toEntity, move)
+module Pirate exposing (Pirate, toEntity, move, takeAHit, isDead)
 
 import Element exposing (Element)
 import Entity exposing (Entity)
@@ -11,6 +11,7 @@ import Coordinate
 type alias Pirate =
     { position : Coordinate.Global
     , path : Maybe AStar.Path
+    , health : Int
     }
 
 
@@ -56,6 +57,16 @@ move pirate =
 
         _ ->
             pirate
+
+
+takeAHit : Pirate -> Pirate
+takeAHit pirate =
+    { pirate | health = pirate.health - 1 }
+
+
+isDead : Pirate -> Bool
+isDead { health } =
+    health <= 0
 
 
 imagePath : String

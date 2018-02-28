@@ -1,12 +1,27 @@
-module Bullet exposing (Bullet, toEntity, fireTowards, fireFrom, move)
+module Bullet
+    exposing
+        ( Bullet
+        , toEntity
+        , fireTowards
+        , fireFrom
+        , move
+        , impact
+        , isDead
+        )
 
 import Coordinate
 import Entity exposing (Entity)
 
 
+type Status
+    = Flying
+    | Impacted
+
+
 type alias Bullet =
     { position : Coordinate.Global
     , target : Coordinate.Global
+    , status : Status
     }
 
 
@@ -14,6 +29,7 @@ fireFrom : Coordinate.Global -> Bullet
 fireFrom position =
     { position = position
     , target = position
+    , status = Flying
     }
 
 
@@ -39,6 +55,16 @@ move bullet =
                 { bullet | position = thisTickG }
         else
             { bullet | position = bullet.target }
+
+
+impact : Bullet -> Bullet
+impact bullet =
+    { bullet | status = Impacted }
+
+
+isDead : Bullet -> Bool
+isDead { position, target, status } =
+    status == Impacted || position == target
 
 
 speed : Int
