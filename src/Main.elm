@@ -1,19 +1,9 @@
 module Main exposing (main)
 
 import Game exposing (Game(..))
-import Bullet exposing (Bullet)
-import Collage
 import Html exposing (Html, text)
-import Map exposing (Map)
 import Mouse
-import Element exposing (Element)
-import Text
-import Pirate exposing (Pirate)
-import Entity exposing (Entity)
-import Path
 import Time
-import Coordinate
-import Tower exposing (Tower)
 
 
 type Msg
