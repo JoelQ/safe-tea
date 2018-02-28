@@ -83,29 +83,19 @@ view : Game -> Html Msg
 view game =
     case game of
         IntroPhase map ->
-            Html.div []
-                [ Game.viewIntroPhase map
-                ]
+            Game.viewIntroPhase map
 
         TowerPlacementPhase placementState ->
-            Html.div []
-                [ Game.viewTowerPlacementPhase placementState
-                ]
+            Game.viewTowerPlacementPhase placementState
 
         AttackPhase gameState ->
-            Html.div []
-                [ Game.viewAttackPhase gameState
-                ]
+            Game.viewAttackPhase gameState
 
         Victory gameState ->
-            Html.div []
-                [ Game.viewVictoryScreen gameState
-                ]
+            Game.viewVictoryScreen gameState
 
         Defeat gameState ->
-            Html.div []
-                [ Game.viewDefeatScreen gameState
-                ]
+            Game.viewDefeatScreen gameState
 
 
 subscriptions : Game -> Sub Msg
