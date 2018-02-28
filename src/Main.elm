@@ -5,6 +5,7 @@ import Html exposing (Html, text)
 import Map exposing (Map)
 import Mouse
 import Element exposing (Element)
+import Text
 import Pirate exposing (Pirate)
 import Entity exposing (Entity)
 import Path
@@ -13,7 +14,12 @@ import Coordinate
 import Tower exposing (Tower)
 
 
-type alias Game =
+type Game
+    = IntroPhase Map
+    | AttackPhase GameState
+
+
+type alias GameState =
     { map : Map
     , pirates : List Pirate
     , playerShip : Entity
@@ -53,23 +59,29 @@ pirate3 =
     }
 
 
+
+-- initialGame : Game
+-- initialGame =
+--     { map = Map.level1
+--     , pirates = [ pirate1, pirate2, pirate3 ]
+--     , playerShip = player
+--     , towerPlacement = Tower.noPlacement
+--     , towers = []
+--     , bullets = []
+--     }
+
+
 initialGame : Game
 initialGame =
-    { map = Map.level1
-    , pirates = [ pirate1, pirate2, pirate3 ]
-    , playerShip = player
-    , towerPlacement = Tower.noPlacement
-    , towers = []
-    , bullets = []
-    }
+    IntroPhase Map.level1
 
 
-calculatesPaths : Game -> Game
+calculatesPaths : GameState -> GameState
 calculatesPaths game =
     { game | pirates = List.map (calculatePiratePath game) game.pirates }
 
 
-calculatePiratePath : Game -> Pirate -> Pirate
+calculatePiratePath : GameState -> Pirate -> Pirate
 calculatePiratePath game pirate =
     { pirate
         | path =
@@ -86,28 +98,51 @@ type Msg
 
 
 update : Msg -> Game -> ( Game, Cmd Msg )
-update msg game =
-    case msg of
-        Tick ->
-            game
-                |> applyMovement
-                |> shoot
-                |> detectCollisions
-                |> eliminateDead
+update msg gamePhase =
+    case gamePhase of
+        IntroPhase map ->
+            gamePhase
                 |> (\g -> ( g, Cmd.none ))
 
-        MouseMove mousePosition ->
-            ( { game | towerPlacement = Tower.placement mousePosition game.map }
-            , Cmd.none
-            )
+        AttackPhase gameState ->
+            case msg of
+                Tick ->
+                    gameState
+                        |> applyMovement
+                        |> shoot
+                        |> detectCollisions
+                        |> eliminateDead
+                        |> AttackPhase
+                        |> (\g -> ( g, Cmd.none ))
 
-        PlaceTower ->
-            ( { game | towers = Tower.placeTower game.map game.towers game.towerPlacement }
-            , Cmd.none
-            )
+                MouseMove mousePosition ->
+                    gameState
+                        |> calculateTowerPlacement mousePosition
+                        |> AttackPhase
+                        |> (\g -> ( g, Cmd.none ))
+
+                PlaceTower ->
+                    gameState
+                        |> placeTower
+                        |> AttackPhase
+                        |> (\g -> ( g, Cmd.none ))
 
 
-applyMovement : Game -> Game
+calculateTowerPlacement : Mouse.Position -> GameState -> GameState
+calculateTowerPlacement mousePosition gameState =
+    { gameState | towerPlacement = Tower.placement mousePosition gameState.map }
+
+
+placeTower : GameState -> GameState
+placeTower gameState =
+    let
+        towers =
+            Tower.placeTower gameState.map gameState.towers gameState.towerPlacement
+    in
+        { gameState | towers = towers }
+
+
+applyMovement : GameState -> GameState
 applyMovement game =
     { game
         | pirates = List.map Pirate.move game.pirates
@@ -126,7 +161,7 @@ collided bullets pirate =
         |> Maybe.map (\bullet -> ( pirate, bullet ))
 
 
-detectCollisions : Game -> Game
+detectCollisions : GameState -> GameState
 detectCollisions game =
     let
         ( collidedPirates, collidedBullets ) =
@@ -177,7 +212,7 @@ attemptToShootNearbyPirates pirates tower =
         shootNearbyPirates pirates tower
 
 
-shoot : Game -> Game
+shoot : GameState -> GameState
 shoot ({ pirates, towers } as game) =
     let
         ( shotTowers, bullets ) =
@@ -190,77 +225,85 @@ shoot ({ pirates, towers } as game) =
         }
 
 
-eliminateDead : Game -> Game
+eliminateDead : GameState -> GameState
 eliminateDead game =
     { game | bullets = List.filter (\b -> b.position /= b.target) game.bullets }
 
 
-viewMapAndEntities : Game -> Html a
-viewMapAndEntities game =
-    [ Map.render Map.level1
-    , Entity.renderList <| List.map Pirate.toEntity game.pirates
-    , Entity.render game.playerShip
-    , Tower.renderPlacement game.map game.towerPlacement
-    , Tower.renderTowers game.map game.towers
-    , Entity.renderList <| List.map Bullet.toEntity game.bullets
-    , Path.renderList <| List.map .path game.pirates
+viewAttackPhase : GameState -> Html a
+viewAttackPhase gameState =
+    [ Map.render gameState.map
+    , Entity.renderList <| List.map Pirate.toEntity gameState.pirates
+    , Entity.render gameState.playerShip
+    , Tower.renderPlacement gameState.map gameState.towerPlacement
+    , Tower.renderTowers gameState.map gameState.towers
+    , Entity.renderList <| List.map Bullet.toEntity gameState.bullets
+    , Path.renderList <| List.map .path gameState.pirates
     ]
         |> Element.layers
         |> Element.toHtml
 
 
-showXYEntity : Map -> String -> { a | position : Coordinate.Global } -> Html b
-showXYEntity map name { position } =
-    let
-        ( x, y ) =
-            Coordinate.toTuple position
-    in
-        Html.div []
-            [ Html.h4 [] [ text name ]
-            , Html.ul []
-                [ Html.li [] [ text <| "X: " ++ toString x ]
-                , Html.li [] [ text <| "Y: " ++ toString y ]
-                , Html.li [] [ text <| "Tile number: " ++ (toString <| Map.tileNumberFromCoords x y map) ]
-                ]
-            ]
+introText : String
+introText =
+    """
+  You are a tea merchant and your ship has just run aground on a
+  sandbank.  To make things worse, it seems like a group of pirates
+  have noticed your predicament.
+
+  Your crew have time to build 3 towers before the pirates attack.
+  Make the most of them.
+
+  Defeat the pirates! Save the tea!
+
+  Click anywhere to continue...
+  """
 
 
-debugInfo : Game -> Html Msg
-debugInfo game =
-    let
-        player =
-            showXYEntity game.map "Player Ship" game.playerShip
-
-        pirates =
-            List.map (showXYEntity game.map "Pirate") game.pirates
-
-        header =
-            Html.h2 [] [ text "Debug Entities" ]
-    in
-        Html.section [] (header :: player :: pirates)
+viewIntroPhase : Map -> Html a
+viewIntroPhase map =
+    [ Map.render map |> Element.opacity 0.3
+    , Text.fromString introText
+        |> Text.height 30
+        |> Text.typeface [ "helvetica", "arial", "sans-serif" ]
+        |> Element.centered
+    ]
+        |> Element.layers
+        |> Element.toHtml
 
 
 view : Game -> Html Msg
 view game =
-    Html.div []
-        [ viewMapAndEntities game
-        , debugInfo game
-        ]
+    case game of
+        IntroPhase map ->
+            Html.div []
+                [ viewIntroPhase map
+                ]
+
+        AttackPhase gameState ->
+            Html.div []
+                [ viewAttackPhase gameState
+                ]
 
 
 subscriptions : Game -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Time.every (33 * Time.millisecond) (always Tick)
-        , Mouse.moves MouseMove
-        , Mouse.clicks (always PlaceTower)
-        ]
+subscriptions game =
+    case game of
+        IntroPhase _ ->
+            Sub.none
+
+        AttackPhase _ ->
+            Sub.batch
+                [ Time.every (33 * Time.millisecond) (always Tick)
+                , Mouse.moves MouseMove
+                , Mouse.clicks (always PlaceTower)
+                ]
 
 
 main : Program Never Game Msg
 main =
     Html.program
-        { init = ( calculatesPaths initialGame, Cmd.none )
+        { init = ( initialGame, Cmd.none )
         , update = update
         , view = view
         , subscriptions = subscriptions
