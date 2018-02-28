@@ -131,8 +131,22 @@ update msg gamePhase =
                         |> (\g -> ( g, Cmd.none ))
 
         TowerPlacementPhase placementState ->
-            gamePhase
-                |> (\g -> ( g, Cmd.none ))
+            case msg of
+                MouseMove mousePosition ->
+                    placementState
+                        |> calculateTowerPlacement mousePosition
+                        |> TowerPlacementPhase
+                        |> (\g -> ( g, Cmd.none ))
+
+                PlaceTower ->
+                    placementState
+                        |> placeTower
+                        |> TowerPlacementPhase
+                        |> (\g -> ( g, Cmd.none ))
+
+                _ ->
+                    gamePhase
+                        |> (\g -> ( g, Cmd.none ))
 
         AttackPhase gameState ->
             case msg of
@@ -145,36 +159,24 @@ update msg gamePhase =
                         |> AttackPhase
                         |> (\g -> ( g, Cmd.none ))
 
-                MouseMove mousePosition ->
-                    gameState
-                        |> calculateTowerPlacement mousePosition
-                        |> AttackPhase
-                        |> (\g -> ( g, Cmd.none ))
-
-                PlaceTower ->
-                    gameState
-                        |> placeTower
-                        |> AttackPhase
-                        |> (\g -> ( g, Cmd.none ))
-
                 _ ->
                     gameState
                         |> AttackPhase
                         |> (\g -> ( g, Cmd.none ))
 
 
-calculateTowerPlacement : Mouse.Position -> GameState -> GameState
-calculateTowerPlacement mousePosition gameState =
-    { gameState | towerPlacement = Tower.placement mousePosition gameState.map }
+calculateTowerPlacement : Mouse.Position -> PlacementState -> PlacementState
+calculateTowerPlacement mousePosition ({ map } as placementState) =
+    { placementState | towerPlacement = Tower.placement mousePosition map }
 
 
-placeTower : GameState -> GameState
-placeTower gameState =
+placeTower : PlacementState -> PlacementState
+placeTower ({ map, towers, towerPlacement } as placementState) =
     let
-        towers =
-            Tower.placeTower gameState.map gameState.towers gameState.towerPlacement
+        placedTowers =
+            Tower.placeTower map towers towerPlacement
     in
-        { gameState | towers = towers }
+        { placementState | towers = placedTowers }
 
 
 applyMovement : GameState -> GameState
@@ -265,6 +267,17 @@ eliminateDead game =
     { game | bullets = List.filter (\b -> b.position /= b.target) game.bullets }
 
 
+viewTowerPlacementPhase : PlacementState -> Html a
+viewTowerPlacementPhase { map, playerShip, towerPlacement, towers } =
+    [ Map.render map
+    , Entity.render playerShip
+    , Tower.renderPlacement map towerPlacement
+    , Tower.renderTowers map towers
+    ]
+        |> Element.layers
+        |> Element.toHtml
+
+
 viewAttackPhase : GameState -> Html a
 viewAttackPhase gameState =
     [ Map.render gameState.map
@@ -317,7 +330,7 @@ view game =
 
         TowerPlacementPhase placementState ->
             Html.div []
-                [ Map.render placementState.map |> Element.toHtml
+                [ viewTowerPlacementPhase placementState
                 ]
 
         AttackPhase gameState ->
@@ -333,7 +346,10 @@ subscriptions game =
             Mouse.clicks (always StartPlacement)
 
         TowerPlacementPhase _ ->
-            Sub.none
+            Sub.batch
+                [ Mouse.moves MouseMove
+                , Mouse.clicks (always PlaceTower)
+                ]
 
         AttackPhase _ ->
             Sub.batch
