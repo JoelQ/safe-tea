@@ -2,6 +2,9 @@ module Tower
     exposing
         ( Placement
         , Tower
+        , isReadyToShoot
+        , shoot
+        , timeElapsed
         , placement
         , renderPlacement
         , noPlacement
@@ -15,22 +18,43 @@ import Map exposing (Map, Pixels(..))
 import Mouse
 import Tile
 import TileSheet exposing (TileSheet)
+import Time exposing (Time)
 import Color
 import Coordinate
 
 
 type alias Tower =
-    { hasShot : Bool
-    , tileNumber : Map.TileNumber
+    { tileNumber : Map.TileNumber
     , position : Coordinate.Global
+    , timeSinceLastShot : Time
     }
+
+
+isReadyToShoot : Tower -> Bool
+isReadyToShoot { timeSinceLastShot } =
+    timeSinceLastShot > reloadTime
+
+
+shoot : Time -> Tower -> Tower
+shoot diff tower =
+    { tower | timeSinceLastShot = tower.timeSinceLastShot + diff - reloadTime }
+
+
+timeElapsed : Time -> Tower -> Tower
+timeElapsed diff tower =
+    { tower | timeSinceLastShot = tower.timeSinceLastShot + diff }
+
+
+reloadTime : Time
+reloadTime =
+    Time.second / 1
 
 
 fromTileNumber : Map -> Map.TileNumber -> Tower
 fromTileNumber map tileNumber =
-    { hasShot = False
-    , tileNumber = tileNumber
+    { tileNumber = tileNumber
     , position = Map.centerOfTile map tileNumber
+    , timeSinceLastShot = 0
     }
 
 

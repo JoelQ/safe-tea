@@ -228,11 +228,11 @@ detectCollisions game =
         }
 
 
-shoot : GameState -> GameState
-shoot ({ pirates, towers } as game) =
+shoot : Time -> GameState -> GameState
+shoot diff ({ pirates, towers } as game) =
     let
         ( shotTowers, bullets ) =
-            List.map (attemptToShootNearbyPirates pirates) towers
+            List.map (attemptToShootNearbyPirates diff pirates) towers
                 |> List.unzip
     in
         { game
@@ -268,8 +268,8 @@ collided bullets pirate =
 -- SHOOTING RANGE
 
 
-shootPirate : Tower -> Maybe Pirate -> ( Tower, Maybe Bullet )
-shootPirate tower pirateInRange =
+shootPirate : Time -> Tower -> Maybe Pirate -> ( Tower, Maybe Bullet )
+shootPirate diff tower pirateInRange =
     case pirateInRange of
         Just pirate ->
             let
@@ -277,26 +277,26 @@ shootPirate tower pirateInRange =
                     Bullet.fireFrom tower.position
                         |> Bullet.fireTowards pirate.position
             in
-                ( { tower | hasShot = True }, Just bullet )
+                ( Tower.shoot diff tower, Just bullet )
 
         Nothing ->
             ( tower, Nothing )
 
 
-shootNearbyPirates : List Pirate -> Tower -> ( Tower, Maybe Bullet )
-shootNearbyPirates pirates tower =
+shootNearbyPirates : Time -> List Pirate -> Tower -> ( Tower, Maybe Bullet )
+shootNearbyPirates diff pirates tower =
     pirates
         |> List.filter (\pirate -> Coordinate.distance tower.position pirate.position < Tower.maxRange)
         |> List.head
-        |> shootPirate tower
+        |> shootPirate diff tower
 
 
-attemptToShootNearbyPirates : List Pirate -> Tower -> ( Tower, Maybe Bullet )
-attemptToShootNearbyPirates pirates tower =
-    if tower.hasShot then
-        ( tower, Nothing )
+attemptToShootNearbyPirates : Time -> List Pirate -> Tower -> ( Tower, Maybe Bullet )
+attemptToShootNearbyPirates diff pirates tower =
+    if Tower.isReadyToShoot tower then
+        shootNearbyPirates diff pirates tower
     else
-        shootNearbyPirates pirates tower
+        ( Tower.timeElapsed diff tower, Nothing )
 
 
 

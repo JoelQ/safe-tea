@@ -50,7 +50,7 @@ update msg gamePhase =
                 Tick diff ->
                     gameState
                         |> Game.applyMovement diff
-                        |> Game.shoot
+                        |> Game.shoot diff
                         |> Game.detectCollisions
                         |> Game.eliminateDead
                         |> Game.checkForGameEnd
